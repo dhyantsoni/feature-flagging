@@ -1,0 +1,94 @@
+{
+  "production": {
+    "type": "percentage",
+    "kill_switch_active": false,
+    "baseline": {
+      "feature1_recommendations": false,
+      "feature2_enhanced_notifications": false,
+      "feature3_advanced_analytics": false
+    },
+    "features": {
+      "feature1_recommendations": {
+        "enabled": false,
+        "percentage": 0
+      },
+      "feature2_enhanced_notifications": {
+        "enabled": false,
+        "percentage": 0
+      },
+      "feature3_advanced_analytics": {
+        "enabled": false,
+        "percentage": 0
+      }
+    }
+  },
+  "staging": {
+    "type": "percentage",
+    "kill_switch_active": false,
+    "baseline": {
+      "feature1_recommendations": false,
+      "feature2_enhanced_notifications": false,
+      "feature3_advanced_analytics": false
+    },
+    "features": {
+      "feature1_recommendations": {
+        "enabled": true,
+        "percentage": 100
+      },
+      "feature2_enhanced_notifications": {
+        "enabled": true,
+        "percentage": 100
+      },
+      "feature3_advanced_analytics": {
+        "enabled": true,
+        "percentage": 100
+      }
+    }
+  },
+  "development": {
+    "type": "percentage",
+    "kill_switch_active": false,
+    "baseline": {
+      "feature1_recommendations": true,
+      "feature2_enhanced_notifications": true,
+      "feature3_advanced_analytics": true
+    },
+    "features": {
+      "feature1_recommendations": {
+        "enabled": true,
+        "percentage": 100
+      },
+      "feature2_enhanced_notifications": {
+        "enabled": true,
+        "percentage": 100
+      },
+      "feature3_advanced_analytics": {
+        "enabled": true,
+        "percentage": 100
+      }
+    }
+  },
+  "emergency": {
+    "type": "percentage",
+    "kill_switch_active": true,
+    "baseline": {
+      "feature1_recommendations": false,
+      "feature2_enhanced_notifications": false,
+      "feature3_advanced_analytics": false
+    },
+    "features": {
+      "feature1_recommendations": {
+        "enabled": false,
+        "percentage": 0
+      },
+      "feature2_enhanced_notifications": {
+        "enabled": false,
+        "percentage": 0
+      },
+      "feature3_advanced_analytics": {
+        "enabled": false,
+        "percentage": 0
+      }
+    }
+  }
+}

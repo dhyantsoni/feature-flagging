@@ -1,0 +1,83 @@
+{
+  "sample_app.feature_flag": [],
+  "sample_app.decorator": [],
+  "sample_app.database_query": [
+    "sample_app.print"
+  ],
+  "sample_app.send_notification": [
+    "sample_app.print"
+  ],
+  "sample_app.log_event": [
+    "sample_app.print"
+  ],
+  "sample_app.calculate_recommendations": [
+    "sample_app.fetch_user_preferences",
+    "sample_app.generate_recommendations",
+    "sample_app.cache_recommendations",
+    "sample_app.feature_flag"
+  ],
+  "sample_app.fetch_user_preferences": [
+    "sample_app.database_query"
+  ],
+  "sample_app.generate_recommendations": [
+    "sample_app.process_algorithm"
+  ],
+  "sample_app.process_algorithm": [],
+  "sample_app.cache_recommendations": [
+    "sample_app.print"
+  ],
+  "sample_app.send_enhanced_notification": [
+    "sample_app.enrich_notification",
+    "sample_app.determine_delivery_method",
+    "sample_app.deliver_notification",
+    "sample_app.track_notification_sent",
+    "sample_app.feature_flag"
+  ],
+  "sample_app.enrich_notification": [],
+  "sample_app.determine_delivery_method": [
+    "sample_app.database_query",
+    "user_prefs.get"
+  ],
+  "sample_app.deliver_notification": [
+    "sample_app.send_push_notification",
+    "sample_app.send_email_notification"
+  ],
+  "sample_app.send_push_notification": [
+    "sample_app.print"
+  ],
+  "sample_app.send_email_notification": [
+    "sample_app.print"
+  ],
+  "sample_app.track_notification_sent": [
+    "sample_app.log_event"
+  ],
+  "sample_app.generate_advanced_report": [
+    "sample_app.collect_analytics_data",
+    "sample_app.process_analytics",
+    "sample_app.create_visualizations",
+    "sample_app.compile_report",
+    "sample_app.feature_flag"
+  ],
+  "sample_app.collect_analytics_data": [
+    "sample_app.database_query"
+  ],
+  "sample_app.process_analytics": [
+    "sample_app.apply_statistical_models"
+  ],
+  "sample_app.apply_statistical_models": [],
+  "sample_app.create_visualizations": [
+    "sample_app.generate_charts"
+  ],
+  "sample_app.generate_charts": [],
+  "sample_app.compile_report": [],
+  "sample_app.get_basic_user_info": [
+    "sample_app.database_query"
+  ],
+  "sample_app.main": [
+    "sample_app.calculate_recommendations",
+    "sample_app.send_enhanced_notification",
+    "sample_app.generate_advanced_report",
+    "sample_app.get_basic_user_info",
+    "sample_app.print"
+  ]
+}
