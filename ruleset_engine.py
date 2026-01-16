@@ -1,25 +1,19 @@
 """
 Rule Set Engine for Feature Flagging System
 
-Handles ruleset evaluation, percentage rollouts, A/B testing, and kill switch functionality.
+Maps clients to rulesets, which define available features.
+Supports baseline fallback when features fail.
 """
 
 import hashlib
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Set
 from enum import Enum
-
-
-class RulesetType(Enum):
-    """Types of rulesets available"""
-    PERCENTAGE = "percentage"
-    USER_TARGETING = "user_targeting"
-    AB_TEST = "ab_test"
-    KILL_SWITCH = "kill_switch"
 
 
 class Ruleset:
     """
-    Represents a feature flag ruleset with evaluation logic.
+    Represents a ruleset defining available features for clients.
+    Each ruleset is a feature set that clients can be assigned to.
     """
 
     def __init__(self, name: str, config: Dict[str, Any]):
@@ -27,178 +21,148 @@ class Ruleset:
         Initialize a ruleset.
 
         Args:
-            name: Unique identifier for the ruleset
-            config: Configuration dictionary containing ruleset parameters
+            name: Unique identifier for the ruleset (e.g., "enterprise_tier", "free_tier")
+            config: Configuration dictionary containing:
+                - description: Human-readable description
+                - features: List or dict of available features
+                - baseline_ruleset: Name of ruleset to fall back to on failure
+                - rollout_percentage: Optional percentage for gradual rollout
+                - user_targeting: Optional user whitelists/blacklists
         """
         self.name = name
         self.config = config
-        self.ruleset_type = RulesetType(config.get("type", "percentage"))
-        self.baseline = config.get("baseline", {})
-        self.kill_switch_active = config.get("kill_switch_active", False)
+        self.description = config.get("description", "")
+        self.baseline_ruleset = config.get("baseline_ruleset", None)
 
-    def evaluate(self, feature_name: str, user_context: Optional[Dict[str, Any]] = None) -> bool:
+        # Parse features - can be list or dict
+        features_config = config.get("features", {})
+        if isinstance(features_config, list):
+            # Simple list of feature names - all enabled by default
+            self.features = {f: {"enabled": True} for f in features_config}
+        else:
+            # Dict with per-feature configuration
+            self.features = features_config
+
+    def has_feature(self, feature_name: str) -> bool:
         """
-        Evaluate if a feature should be enabled based on the ruleset.
+        Check if this ruleset includes a specific feature.
 
         Args:
-            feature_name: Name of the feature to evaluate
-            user_context: Dictionary containing user information (user_id, attributes, etc.)
+            feature_name: Name of the feature to check
 
         Returns:
-            True if feature should be enabled, False otherwise
+            True if feature is available in this ruleset
         """
-        # Check kill switch first
-        if self.kill_switch_active:
-            return self._get_baseline_value(feature_name)
-
-        # Get feature configuration from ruleset
-        features = self.config.get("features", {})
-        feature_config = features.get(feature_name)
-
-        if not feature_config:
-            return self._get_baseline_value(feature_name)
-
-        # If feature is explicitly disabled
-        if not feature_config.get("enabled", True):
+        if feature_name not in self.features:
             return False
 
-        # Evaluate based on ruleset type
-        if self.ruleset_type == RulesetType.PERCENTAGE:
-            return self._evaluate_percentage(feature_name, feature_config, user_context)
-        elif self.ruleset_type == RulesetType.USER_TARGETING:
-            return self._evaluate_user_targeting(feature_config, user_context)
-        elif self.ruleset_type == RulesetType.AB_TEST:
-            return self._evaluate_ab_test(feature_config, user_context)
+        feature_config = self.features[feature_name]
+        if isinstance(feature_config, dict):
+            return feature_config.get("enabled", True)
+        return True
 
-        return self._get_baseline_value(feature_name)
+    def get_all_features(self) -> Set[str]:
+        """Get all features available in this ruleset."""
+        return {f for f, config in self.features.items()
+                if (isinstance(config, dict) and config.get("enabled", True)) or config}
 
-    def _get_baseline_value(self, feature_name: str) -> bool:
-        """Get the baseline value for a feature (used during kill switch or fallback)"""
-        return self.baseline.get(feature_name, False)
 
-    def _evaluate_percentage(
+class ClientManager:
+    """
+    Manages client-to-ruleset assignments.
+    """
+
+    def __init__(self):
+        """Initialize the client manager"""
+        self.clients: Dict[str, Dict[str, Any]] = {}
+
+    def register_client(
         self,
-        feature_name: str,
-        feature_config: Dict[str, Any],
-        user_context: Optional[Dict[str, Any]]
-    ) -> bool:
+        client_id: str,
+        ruleset_name: str,
+        metadata: Optional[Dict[str, Any]] = None
+    ) -> None:
         """
-        Evaluate percentage-based rollout.
-        Uses consistent hashing to ensure same user always gets same result.
-        """
-        percentage = feature_config.get("percentage", 0)
+        Register a client and assign them to a ruleset.
 
-        if percentage <= 0:
-            return False
-        if percentage >= 100:
+        Args:
+            client_id: Unique identifier for the client
+            ruleset_name: Name of the ruleset to assign
+            metadata: Optional metadata (name, tier, etc.)
+        """
+        self.clients[client_id] = {
+            "ruleset": ruleset_name,
+            "metadata": metadata or {},
+            "active": True
+        }
+
+    def get_client_ruleset(self, client_id: str) -> Optional[str]:
+        """
+        Get the ruleset name assigned to a client.
+
+        Args:
+            client_id: Client identifier
+
+        Returns:
+            Ruleset name or None if client not found
+        """
+        client = self.clients.get(client_id)
+        if client and client.get("active", True):
+            return client.get("ruleset")
+        return None
+
+    def update_client_ruleset(self, client_id: str, new_ruleset: str) -> bool:
+        """
+        Update a client's assigned ruleset.
+
+        Args:
+            client_id: Client identifier
+            new_ruleset: New ruleset name to assign
+
+        Returns:
+            True if successful, False if client not found
+        """
+        if client_id in self.clients:
+            self.clients[client_id]["ruleset"] = new_ruleset
             return True
-
-        # Need user_id for consistent hashing
-        if not user_context or "user_id" not in user_context:
-            # If no user context, use random-like behavior based on feature name
-            return False
-
-        user_id = str(user_context["user_id"])
-
-        # Create deterministic hash for user + feature combination
-        hash_input = f"{user_id}:{feature_name}".encode()
-        hash_value = int(hashlib.md5(hash_input).hexdigest(), 16)
-        user_percentage = (hash_value % 100) + 1
-
-        return user_percentage <= percentage
-
-    def _evaluate_user_targeting(
-        self,
-        feature_config: Dict[str, Any],
-        user_context: Optional[Dict[str, Any]]
-    ) -> bool:
-        """
-        Evaluate user-targeting rules (whitelist, blacklist, attributes).
-        """
-        if not user_context:
-            return False
-
-        user_id = user_context.get("user_id")
-
-        # Check whitelist
-        whitelist = feature_config.get("whitelist", [])
-        if whitelist and user_id in whitelist:
-            return True
-
-        # Check blacklist
-        blacklist = feature_config.get("blacklist", [])
-        if blacklist and user_id in blacklist:
-            return False
-
-        # Check attribute targeting
-        target_attributes = feature_config.get("target_attributes", {})
-        if target_attributes:
-            return self._check_attributes(target_attributes, user_context)
-
-        # Default to percentage rollout if available
-        if "percentage" in feature_config:
-            return self._evaluate_percentage(
-                feature_config.get("name", "unknown"),
-                feature_config,
-                user_context
-            )
-
         return False
 
-    def _evaluate_ab_test(
-        self,
-        feature_config: Dict[str, Any],
-        user_context: Optional[Dict[str, Any]]
-    ) -> bool:
+    def deactivate_client(self, client_id: str) -> bool:
         """
-        Evaluate A/B test assignment.
-        Assigns users to groups consistently and checks if assigned to treatment group.
+        Deactivate a client (they'll fall back to baseline).
+
+        Args:
+            client_id: Client identifier
+
+        Returns:
+            True if successful, False if client not found
         """
-        if not user_context or "user_id" not in user_context:
-            return False
+        if client_id in self.clients:
+            self.clients[client_id]["active"] = False
+            return True
+        return False
 
-        user_id = str(user_context["user_id"])
-        groups = feature_config.get("groups", ["control", "treatment"])
-        treatment_groups = feature_config.get("treatment_groups", ["treatment"])
-
-        # Assign user to group consistently
-        hash_input = f"{user_id}:{self.name}".encode()
-        hash_value = int(hashlib.md5(hash_input).hexdigest(), 16)
-        assigned_group = groups[hash_value % len(groups)]
-
-        return assigned_group in treatment_groups
-
-    def _check_attributes(
-        self,
-        target_attributes: Dict[str, Any],
-        user_context: Dict[str, Any]
-    ) -> bool:
-        """
-        Check if user attributes match targeting criteria.
-        """
-        for key, value in target_attributes.items():
-            user_value = user_context.get(key)
-
-            # Handle list matching (user value must be in list)
-            if isinstance(value, list):
-                if user_value not in value:
-                    return False
-            # Handle exact matching
-            elif user_value != value:
-                return False
-
-        return True
+    def get_all_clients(self) -> Dict[str, Dict[str, Any]]:
+        """Get all registered clients."""
+        return self.clients.copy()
 
 
 class RulesetEngine:
     """
-    Manages multiple rulesets and evaluates features across them.
+    Core engine managing rulesets and evaluating feature access.
     """
 
-    def __init__(self):
-        """Initialize the ruleset engine"""
+    def __init__(self, baseline_ruleset_name: str = "baseline"):
+        """
+        Initialize the ruleset engine.
+
+        Args:
+            baseline_ruleset_name: Name of the baseline/fallback ruleset
+        """
         self.rulesets: Dict[str, Ruleset] = {}
-        self.active_ruleset_name: Optional[str] = None
+        self.client_manager = ClientManager()
+        self.baseline_ruleset_name = baseline_ruleset_name
+        self._use_baseline = False  # Global kill switch
 
     def load_ruleset(self, name: str, config: Dict[str, Any]) -> None:
         """
@@ -220,83 +184,165 @@ class RulesetEngine:
         for name, config in rulesets_config.items():
             self.load_ruleset(name, config)
 
-    def set_active_ruleset(self, name: str) -> None:
+    def register_client(
+        self,
+        client_id: str,
+        ruleset_name: str,
+        metadata: Optional[Dict[str, Any]] = None
+    ) -> None:
         """
-        Set the active ruleset to use for evaluation.
+        Register a client and assign them to a ruleset.
 
         Args:
-            name: Name of the ruleset to activate
-
-        Raises:
-            ValueError: If ruleset with given name doesn't exist
+            client_id: Unique client identifier
+            ruleset_name: Ruleset to assign
+            metadata: Optional client metadata
         """
-        if name not in self.rulesets:
-            raise ValueError(f"Ruleset '{name}' not found")
-        self.active_ruleset_name = name
+        self.client_manager.register_client(client_id, ruleset_name, metadata)
 
-    def evaluate_feature(
+    def is_feature_enabled(
         self,
+        client_id: str,
         feature_name: str,
-        user_context: Optional[Dict[str, Any]] = None,
-        ruleset_name: Optional[str] = None
+        user_context: Optional[Dict[str, Any]] = None
     ) -> bool:
         """
-        Evaluate if a feature should be enabled.
+        Check if a feature is enabled for a specific client.
+
+        This checks:
+        1. Global kill switch (forces baseline)
+        2. Client's assigned ruleset
+        3. Feature availability in ruleset
+        4. Per-feature rollout percentage (if configured)
+        5. Falls back to baseline on failure
 
         Args:
-            feature_name: Name of the feature to evaluate
-            user_context: User context for evaluation
-            ruleset_name: Optional specific ruleset to use (defaults to active ruleset)
+            client_id: Client identifier
+            feature_name: Feature to check
+            user_context: Optional user context for percentage rollouts
 
         Returns:
-            True if feature should be enabled, False otherwise
+            True if feature is enabled, False otherwise
         """
-        ruleset_to_use = ruleset_name or self.active_ruleset_name
+        try:
+            # Check global kill switch
+            if self._use_baseline:
+                return self._check_baseline_feature(feature_name)
 
-        if not ruleset_to_use or ruleset_to_use not in self.rulesets:
-            # No ruleset available, return False as safe default
+            # Get client's assigned ruleset
+            ruleset_name = self.client_manager.get_client_ruleset(client_id)
+
+            if not ruleset_name or ruleset_name not in self.rulesets:
+                # Client not found or invalid ruleset - use baseline
+                return self._check_baseline_feature(feature_name)
+
+            ruleset = self.rulesets[ruleset_name]
+
+            # Check if feature exists in ruleset
+            if not ruleset.has_feature(feature_name):
+                # Feature not in ruleset - check baseline
+                return self._check_baseline_feature(feature_name)
+
+            # Check per-feature rollout percentage
+            feature_config = ruleset.features.get(feature_name, {})
+            if isinstance(feature_config, dict):
+                percentage = feature_config.get("percentage", 100)
+
+                if percentage < 100 and user_context:
+                    # Use consistent hashing for percentage rollout
+                    if not self._passes_percentage_check(
+                        client_id, feature_name, percentage, user_context
+                    ):
+                        return self._check_baseline_feature(feature_name)
+
+            return True
+
+        except Exception as e:
+            # On any error, fall back to baseline
+            print(f"Error evaluating feature '{feature_name}' for client '{client_id}': {e}")
+            return self._check_baseline_feature(feature_name)
+
+    def _check_baseline_feature(self, feature_name: str) -> bool:
+        """Check if feature exists in baseline ruleset."""
+        if self.baseline_ruleset_name not in self.rulesets:
             return False
 
-        ruleset = self.rulesets[ruleset_to_use]
-        return ruleset.evaluate(feature_name, user_context)
+        baseline = self.rulesets[self.baseline_ruleset_name]
+        return baseline.has_feature(feature_name)
 
-    def activate_kill_switch(self, ruleset_name: Optional[str] = None) -> None:
+    def _passes_percentage_check(
+        self,
+        client_id: str,
+        feature_name: str,
+        percentage: int,
+        user_context: Dict[str, Any]
+    ) -> bool:
         """
-        Activate kill switch for a ruleset (reverts all features to baseline).
+        Check if user passes percentage rollout using consistent hashing.
+        """
+        user_id = user_context.get("user_id")
+        if not user_id:
+            return False
+
+        # Create deterministic hash for client + user + feature
+        hash_input = f"{client_id}:{user_id}:{feature_name}".encode()
+        hash_value = int(hashlib.md5(hash_input).hexdigest(), 16)
+        user_percentage = (hash_value % 100) + 1
+
+        return user_percentage <= percentage
+
+    def activate_kill_switch(self) -> None:
+        """
+        Activate global kill switch - all clients fall back to baseline.
+        """
+        self._use_baseline = True
+
+    def deactivate_kill_switch(self) -> None:
+        """
+        Deactivate global kill switch - resume normal operation.
+        """
+        self._use_baseline = False
+
+    def get_client_features(self, client_id: str) -> Set[str]:
+        """
+        Get all features available to a client.
 
         Args:
-            ruleset_name: Name of ruleset to activate kill switch for (defaults to active)
-        """
-        ruleset_to_update = ruleset_name or self.active_ruleset_name
-
-        if ruleset_to_update and ruleset_to_update in self.rulesets:
-            self.rulesets[ruleset_to_update].kill_switch_active = True
-
-    def deactivate_kill_switch(self, ruleset_name: Optional[str] = None) -> None:
-        """
-        Deactivate kill switch for a ruleset.
-
-        Args:
-            ruleset_name: Name of ruleset to deactivate kill switch for (defaults to active)
-        """
-        ruleset_to_update = ruleset_name or self.active_ruleset_name
-
-        if ruleset_to_update and ruleset_to_update in self.rulesets:
-            self.rulesets[ruleset_to_update].kill_switch_active = False
-
-    def get_ruleset_baseline(self, ruleset_name: Optional[str] = None) -> Dict[str, bool]:
-        """
-        Get the baseline configuration for a ruleset.
-
-        Args:
-            ruleset_name: Name of ruleset (defaults to active)
+            client_id: Client identifier
 
         Returns:
-            Dictionary mapping feature names to their baseline values
+            Set of feature names
         """
-        ruleset_to_check = ruleset_name or self.active_ruleset_name
+        if self._use_baseline:
+            if self.baseline_ruleset_name in self.rulesets:
+                return self.rulesets[self.baseline_ruleset_name].get_all_features()
+            return set()
 
-        if ruleset_to_check and ruleset_to_check in self.rulesets:
-            return self.rulesets[ruleset_to_check].baseline
+        ruleset_name = self.client_manager.get_client_ruleset(client_id)
+        if ruleset_name and ruleset_name in self.rulesets:
+            return self.rulesets[ruleset_name].get_all_features()
 
-        return {}
+        # Fall back to baseline
+        if self.baseline_ruleset_name in self.rulesets:
+            return self.rulesets[self.baseline_ruleset_name].get_all_features()
+        return set()
+
+    def get_all_clients(self) -> Dict[str, Dict[str, Any]]:
+        """Get all registered clients."""
+        return self.client_manager.get_all_clients()
+
+    def get_all_rulesets(self) -> Dict[str, Dict[str, Any]]:
+        """
+        Get all rulesets with their configurations.
+
+        Returns:
+            Dictionary mapping ruleset names to their info
+        """
+        return {
+            name: {
+                "description": ruleset.description,
+                "features": list(ruleset.get_all_features()),
+                "baseline_ruleset": ruleset.baseline_ruleset
+            }
+            for name, ruleset in self.rulesets.items()
+        }

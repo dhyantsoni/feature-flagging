@@ -1,157 +1,160 @@
 # Feature Flag Rulesets Configuration
 #
-# Each ruleset defines how features should be evaluated for different environments,
-# user segments, or testing scenarios.
+# Each ruleset defines a set of features that clients assigned to it can access.
+# Clients are assigned to rulesets, and if a feature fails, they fall back to baseline.
 
-# Production Ruleset - Conservative rollout with baseline fallback
-production:
-  type: percentage
-  kill_switch_active: false
-  baseline:
-    feature1_recommendations: false
-    feature2_enhanced_notifications: false
-    feature3_advanced_analytics: false
+# Baseline Ruleset - Core features available to ALL clients as fallback
+baseline:
+  description: "Baseline feature set - core functionality only"
   features:
-    feature1_recommendations:
-      enabled: true
-      percentage: 25  # Roll out to 25% of users
-    feature2_enhanced_notifications:
-      enabled: true
-      percentage: 50  # Roll out to 50% of users
-    feature3_advanced_analytics:
-      enabled: false  # Not yet ready for production
+    - basic_dashboard
+    - user_management
+    - basic_reports
+    - profile_settings
 
-# Staging Ruleset - Full feature access for testing
-staging:
-  type: percentage
-  kill_switch_active: false
-  baseline:
-    feature1_recommendations: false
-    feature2_enhanced_notifications: false
-    feature3_advanced_analytics: false
+# Free Tier Ruleset - For free/trial clients
+free_tier:
+  description: "Free tier with limited features"
+  baseline_ruleset: baseline
   features:
-    feature1_recommendations:
+    basic_dashboard: true
+    user_management:
+      enabled: true
+      max_users: 5
+    basic_reports: true
+    profile_settings: true
+    email_notifications: true
+
+# Starter Tier Ruleset - Entry-level paid clients
+starter_tier:
+  description: "Starter paid tier with enhanced features"
+  baseline_ruleset: baseline
+  features:
+    basic_dashboard: true
+    enhanced_dashboard:
       enabled: true
       percentage: 100
-    feature2_enhanced_notifications:
+    user_management:
+      enabled: true
+      max_users: 20
+    basic_reports: true
+    advanced_reports: true
+    profile_settings: true
+    email_notifications: true
+    slack_integration: true
+    api_access:
+      enabled: true
+      rate_limit: 1000
+
+# Professional Tier Ruleset - Mid-tier clients
+professional_tier:
+  description: "Professional tier with advanced features"
+  baseline_ruleset: baseline
+  features:
+    basic_dashboard: true
+    enhanced_dashboard: true
+    user_management:
+      enabled: true
+      max_users: 100
+    basic_reports: true
+    advanced_reports: true
+    custom_reports: true
+    profile_settings: true
+    email_notifications: true
+    slack_integration: true
+    teams_integration: true
+    api_access:
+      enabled: true
+      rate_limit: 10000
+    white_labeling:
       enabled: true
       percentage: 100
-    feature3_advanced_analytics:
-      enabled: true
-      percentage: 100
+    advanced_analytics: true
+    export_data: true
 
-# Development Ruleset - All features enabled
-development:
-  type: percentage
-  kill_switch_active: false
-  baseline:
-    feature1_recommendations: true
-    feature2_enhanced_notifications: true
-    feature3_advanced_analytics: true
+# Enterprise Tier Ruleset - Full-featured for enterprise clients
+enterprise_tier:
+  description: "Enterprise tier with all features"
+  baseline_ruleset: baseline
   features:
-    feature1_recommendations:
+    basic_dashboard: true
+    enhanced_dashboard: true
+    enterprise_dashboard: true
+    user_management:
       enabled: true
-      percentage: 100
-    feature2_enhanced_notifications:
+      max_users: -1  # unlimited
+    basic_reports: true
+    advanced_reports: true
+    custom_reports: true
+    real_time_reports: true
+    profile_settings: true
+    email_notifications: true
+    slack_integration: true
+    teams_integration: true
+    webhook_notifications: true
+    api_access:
       enabled: true
-      percentage: 100
-    feature3_advanced_analytics:
-      enabled: true
-      percentage: 100
+      rate_limit: -1  # unlimited
+    white_labeling: true
+    advanced_analytics: true
+    predictive_analytics: true
+    export_data: true
+    bulk_import: true
+    sso_authentication: true
+    audit_logs: true
+    dedicated_support: true
+    custom_integrations: true
 
-# A/B Test Ruleset - Testing new recommendation engine
-ab_test_recommendations:
-  type: ab_test
-  kill_switch_active: false
-  baseline:
-    feature1_recommendations: false
-    feature2_enhanced_notifications: false
-    feature3_advanced_analytics: false
+# Beta Tier - For testing new features with select clients
+beta_tier:
+  description: "Beta testing tier with experimental features"
+  baseline_ruleset: professional_tier
   features:
-    feature1_recommendations:
+    basic_dashboard: true
+    enhanced_dashboard: true
+    experimental_dashboard:
       enabled: true
-      groups: ["control", "treatment"]
-      treatment_groups: ["treatment"]
-    feature2_enhanced_notifications:
+      percentage: 50  # Gradual rollout to 50% of users
+    user_management:
       enabled: true
-      percentage: 100  # Everyone gets enhanced notifications
-    feature3_advanced_analytics:
-      enabled: false
+      max_users: 50
+    basic_reports: true
+    advanced_reports: true
+    custom_reports: true
+    ai_insights:
+      enabled: true
+      percentage: 30  # Testing with 30% of users
+    profile_settings: true
+    email_notifications: true
+    slack_integration: true
+    api_access:
+      enabled: true
+      rate_limit: 5000
+    advanced_analytics: true
+    export_data: true
+    new_feature_preview: true
 
-# User Targeting Ruleset - Beta testers and power users
-beta_testers:
-  type: user_targeting
-  kill_switch_active: false
-  baseline:
-    feature1_recommendations: false
-    feature2_enhanced_notifications: false
-    feature3_advanced_analytics: false
+# Custom Tier - Fully customizable for special clients
+custom_tier:
+  description: "Custom feature set for special clients"
+  baseline_ruleset: baseline
   features:
-    feature1_recommendations:
+    basic_dashboard: true
+    enhanced_dashboard: true
+    user_management:
       enabled: true
-      whitelist: [123, 456, 789]  # Specific user IDs
-      target_attributes:
-        tier: ["premium", "enterprise"]
-        beta_tester: true
-    feature2_enhanced_notifications:
+      max_users: 200
+    basic_reports: true
+    advanced_reports: true
+    custom_reports: true
+    profile_settings: true
+    email_notifications: true
+    slack_integration: true
+    teams_integration: true
+    api_access:
       enabled: true
-      percentage: 100
-    feature3_advanced_analytics:
-      enabled: true
-      whitelist: [123, 456]
-      target_attributes:
-        tier: ["enterprise"]
-
-# Emergency Ruleset - All features disabled (kill switch demonstration)
-emergency:
-  type: percentage
-  kill_switch_active: true
-  baseline:
-    feature1_recommendations: false
-    feature2_enhanced_notifications: false
-    feature3_advanced_analytics: false
-  features:
-    feature1_recommendations:
-      enabled: false
-    feature2_enhanced_notifications:
-      enabled: false
-    feature3_advanced_analytics:
-      enabled: false
-
-# Gradual Rollout Ruleset - Slowly increasing percentage
-gradual_rollout:
-  type: percentage
-  kill_switch_active: false
-  baseline:
-    feature1_recommendations: false
-    feature2_enhanced_notifications: false
-    feature3_advanced_analytics: false
-  features:
-    feature1_recommendations:
-      enabled: true
-      percentage: 10  # Start with 10%
-    feature2_enhanced_notifications:
-      enabled: true
-      percentage: 30
-    feature3_advanced_analytics:
-      enabled: true
-      percentage: 5
-
-# Custom Baseline Ruleset - Different baselines for different features
-custom_baseline:
-  type: percentage
-  kill_switch_active: false
-  baseline:
-    feature1_recommendations: true   # Baseline is old recommendation system
-    feature2_enhanced_notifications: false  # Baseline is no notifications
-    feature3_advanced_analytics: false
-  features:
-    feature1_recommendations:
-      enabled: true
-      percentage: 50  # 50% get new system, 50% fall back to old system
-    feature2_enhanced_notifications:
-      enabled: true
-      percentage: 75
-    feature3_advanced_analytics:
-      enabled: true
-      percentage: 25
+      rate_limit: 20000
+    white_labeling: true
+    advanced_analytics: true
+    export_data: true
+    # Note: Can be easily customized per client
