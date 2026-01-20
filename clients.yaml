@@ -1,0 +1,68 @@
+# Client Configuration
+#
+# Maps client IDs to their assigned rulesets and metadata.
+# Easy to modify - just change the ruleset value to upgrade/downgrade a client.
+
+acme_corp:
+  ruleset: enterprise_tier
+  metadata:
+    name: "Acme Corporation"
+    tier: "Enterprise"
+    signup_date: "2024-01-15"
+    contact: "admin@acme.com"
+
+techstart_inc:
+  ruleset: starter_tier
+  metadata:
+    name: "TechStart Inc"
+    tier: "Starter"
+    signup_date: "2025-11-20"
+    contact: "hello@techstart.com"
+
+small_biz_llc:
+  ruleset: free_tier
+  metadata:
+    name: "Small Biz LLC"
+    tier: "Free"
+    signup_date: "2026-01-10"
+    contact: "owner@smallbiz.com"
+
+global_enterprises:
+  ruleset: enterprise_tier
+  metadata:
+    name: "Global Enterprises Ltd"
+    tier: "Enterprise"
+    signup_date: "2023-06-01"
+    contact: "it@globalent.com"
+
+startup_co:
+  ruleset: professional_tier
+  metadata:
+    name: "Startup Co"
+    tier: "Professional"
+    signup_date: "2025-08-15"
+    contact: "team@startup.co"
+
+beta_tester_1:
+  ruleset: beta_tier
+  metadata:
+    name: "Beta Tester Company"
+    tier: "Beta"
+    signup_date: "2026-01-01"
+    contact: "beta@tester.com"
+
+freelance_user:
+  ruleset: free_tier
+  metadata:
+    name: "Freelance User"
+    tier: "Free"
+    signup_date: "2026-01-14"
+    contact: "freelancer@email.com"
+
+mid_sized_co:
+  ruleset: professional_tier
+  metadata:
+    name: "Mid-Sized Company"
+    tier: "Professional"
+    signup_date: "2024-09-20"
+    contact: "contact@midsized.com"
