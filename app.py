@@ -1,20 +1,34 @@
 """
 Flask Backend for Feature Flagging Dashboard
 
-Provides REST API and serves the frontend dashboard.
+Provides REST API with AST analysis, function graphing, and Supabase integration.
 """
 
 from flask import Flask, render_template, jsonify, request
 from flask_cors import CORS
 import yaml
+import os
+import json
 
 from feature_flag_client import FeatureFlagClient
+from supabase_client import SupabaseClient
+from enhanced_ast_analyzer import (
+    analyze_codebase_with_helpers,
+    get_functions_for_feature
+)
 
 app = Flask(__name__)
 CORS(app)
 
-# Initialize feature flag client
+# Initialize clients
 ff_client = FeatureFlagClient()
+
+# Initialize Supabase (optional, will be None if env vars not set)
+try:
+    supabase_client = SupabaseClient()
+except ValueError:
+    supabase_client = None
+    print("Warning: Supabase not configured. Set SUPABASE_URL and SUPABASE_KEY environment variables.")
 
 
 # Frontend Routes
@@ -22,6 +36,21 @@ ff_client = FeatureFlagClient()
 def index():
     """Serve the main dashboard."""
     return render_template('index.html')
+
+@app.route('/health')
+def health():
+    """Health check endpoint."""
+    return jsonify({
+        "status": "healthy",
+        "supabase": supabase_client is not None,
+        "endpoints": {
+            "clients": "/api/clients",
+            "rulesets": "/api/rulesets",
+            "projects": "/api/projects",
+            "analyze": "/api/analyze",
+            "functions": "/api/functions"
+        }
+    })
 
 
 # API Routes
@@ -229,6 +258,291 @@ def _add_client_to_yaml(client_id, ruleset, metadata):
 
     except Exception as e:
         print(f"Error updating clients.yaml: {e}")
+
+
+# ============================================================================
+# NEW: AST Analysis & Function Graph Endpoints
+# ============================================================================
+
+@app.route('/api/projects', methods=['GET'])
+def list_projects():
+    """List all projects"""
+    if not supabase_client:
+        return jsonify({"success": False, "error": "Supabase not configured"}), 503
+
+    try:
+        projects = supabase_client.list_projects()
+        return jsonify({"success": True, "projects": projects})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/projects', methods=['POST'])
+def create_project():
+    """Create a new project"""
+    if not supabase_client:
+        return jsonify({"success": False, "error": "Supabase not configured"}), 503
+
+    try:
+        data = request.get_json()
+        name = data.get('name')
+        description = data.get('description', '')
+        repository_url = data.get('repository_url', '')
+        metadata = data.get('metadata', {})
+
+        if not name:
+            return jsonify({"success": False, "error": "Project name required"}), 400
+
+        project = supabase_client.create_project(name, description, repository_url, metadata)
+        return jsonify({"success": True, "project": project})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/projects/<project_id>', methods=['GET'])
+def get_project(project_id):
+    """Get project details"""
+    if not supabase_client:
+        return jsonify({"success": False, "error": "Supabase not configured"}), 503
+
+    try:
+        project = supabase_client.get_project(project_id)
+        if not project:
+            return jsonify({"success": False, "error": "Project not found"}), 404
+
+        return jsonify({"success": True, "project": project})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/analyze', methods=['POST'])
+def analyze_code():
+    """
+    Analyze a Python file and store results in Supabase.
+
+    Request body:
+    {
+        "project_id": "uuid",
+        "file_path": "path/to/file.py",
+        "file_content": "optional base64 encoded content"
+    }
+    """
+    if not supabase_client:
+        return jsonify({"success": False, "error": "Supabase not configured"}), 503
+
+    try:
+        data = request.get_json()
+        project_id = data.get('project_id')
+        file_path = data.get('file_path')
+        file_content = data.get('file_content')
+
+        if not project_id or not file_path:
+            return jsonify({"success": False, "error": "project_id and file_path required"}), 400
+
+        # If file content provided, write to temp file
+        if file_content:
+            import tempfile
+            import base64
+
+            temp_file = tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False)
+            temp_file.write(base64.b64decode(file_content).decode('utf-8'))
+            temp_file.close()
+            analysis_path = temp_file.name
+        else:
+            analysis_path = file_path
+
+        # Run enhanced analysis
+        analysis = analyze_codebase_with_helpers(analysis_path)
+
+        # Save to Supabase
+        # 1. Save function graph
+        graph_result = supabase_client.save_function_graph(
+            project_id=project_id,
+            file_path=file_path,
+            graph_data={"call_graph": analysis["call_graph"]},
+            total_functions=analysis["statistics"]["total_functions"],
+            total_calls=analysis["statistics"]["total_calls"],
+            metadata=analysis["statistics"]
+        )
+
+        # 2. Save functions
+        for func_name in analysis["functions"]:
+            is_flagged = func_name in analysis["feature_flags"]
+            is_helper = func_name in analysis["helper_functions"]
+            is_shared = func_name in analysis["shared_helpers"]
+            complexity = analysis["function_complexity"].get(func_name, 0)
+            line_num = analysis["function_lines"].get(func_name)
+
+            supabase_client.save_function(
+                project_id=project_id,
+                function_name=func_name,
+                file_path=file_path,
+                is_feature_flagged=is_flagged,
+                is_helper=is_helper,
+                is_shared_helper=is_shared,
+                line_number=line_num,
+                complexity_score=complexity
+            )
+
+        # 3. Save features and create mappings
+        for func_name, flag_name in analysis["feature_flags"].items():
+            # Create feature
+            feature = supabase_client.create_feature(
+                project_id=project_id,
+                feature_name=flag_name,
+                description=f"Feature flag: {flag_name}"
+            )
+
+            # Get function ID
+            func_record = supabase_client.get_function(project_id, func_name)
+            if func_record:
+                # Create entry point mapping
+                supabase_client.create_function_mapping(
+                    feature_id=feature['id'],
+                    function_id=func_record['id'],
+                    is_entry_point=True,
+                    dependency_type='direct'
+                )
+
+                # Map downstream dependencies
+                if flag_name in analysis["feature_impact"]:
+                    impact = analysis["feature_impact"][flag_name]
+                    for impact_data in impact.values():
+                        if isinstance(impact_data, dict):
+                            # Map functions that can be disabled
+                            for dep_func in impact_data.get("can_safely_disable", []):
+                                dep_record = supabase_client.get_function(project_id, dep_func)
+                                if dep_record:
+                                    supabase_client.create_function_mapping(
+                                        feature_id=feature['id'],
+                                        function_id=dep_record['id'],
+                                        is_entry_point=False,
+                                        dependency_type='downstream'
+                                    )
+
+                            # Map shared helpers
+                            for helper_func in impact_data.get("must_keep_active", []):
+                                helper_record = supabase_client.get_function(project_id, helper_func)
+                                if helper_record:
+                                    supabase_client.create_function_mapping(
+                                        feature_id=feature['id'],
+                                        function_id=helper_record['id'],
+                                        is_entry_point=False,
+                                        dependency_type='helper'
+                                    )
+
+                            # Save impact analysis
+                            supabase_client.save_impact_analysis(
+                                feature_id=feature['id'],
+                                analysis_data=impact_data,
+                                total_affected=impact_data["impact_summary"]["total_downstream"],
+                                unreachable=impact_data["impact_summary"]["can_disable_count"],
+                                need_fallback=impact_data["impact_summary"]["functions_need_fallback"]
+                            )
+
+        # Clean up temp file
+        if file_content:
+            os.unlink(analysis_path)
+
+        return jsonify({
+            "success": True,
+            "analysis": {
+                "statistics": analysis["statistics"],
+                "features": list(set(analysis["feature_flags"].values())),
+                "shared_helpers": analysis["shared_helpers"]
+            }
+        })
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/projects/<project_id>/functions', methods=['GET'])
+def get_project_functions(project_id):
+    """Get all functions for a project with optional filters"""
+    if not supabase_client:
+        return jsonify({"success": False, "error": "Supabase not configured"}), 503
+
+    try:
+        is_flagged = request.args.get('is_feature_flagged')
+        is_helper = request.args.get('is_helper')
+        is_shared = request.args.get('is_shared_helper')
+
+        # Convert string to bool
+        def to_bool(val):
+            if val is None:
+                return None
+            return val.lower() in ('true', '1', 'yes')
+
+        functions = supabase_client.list_functions(
+            project_id=project_id,
+            is_feature_flagged=to_bool(is_flagged),
+            is_helper=to_bool(is_helper),
+            is_shared_helper=to_bool(is_shared)
+        )
+
+        return jsonify({"success": True, "functions": functions})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/projects/<project_id>/features', methods=['GET'])
+def get_project_features(project_id):
+    """Get all features for a project"""
+    if not supabase_client:
+        return jsonify({"success": False, "error": "Supabase not configured"}), 503
+
+    try:
+        features = supabase_client.list_features(project_id)
+        return jsonify({"success": True, "features": features})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/features/<feature_id>/functions', methods=['GET'])
+def get_feature_functions(feature_id):
+    """Get all functions mapped to a feature"""
+    if not supabase_client:
+        return jsonify({"success": False, "error": "Supabase not configured"}), 503
+
+    try:
+        mappings = supabase_client.get_feature_functions(feature_id)
+        return jsonify({"success": True, "mappings": mappings})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/features/<feature_id>/impact', methods=['GET'])
+def get_feature_impact(feature_id):
+    """Get impact analysis for a feature"""
+    if not supabase_client:
+        return jsonify({"success": False, "error": "Supabase not configured"}), 503
+
+    try:
+        impact = supabase_client.get_impact_analysis(feature_id)
+        if not impact:
+            return jsonify({"success": False, "error": "No impact analysis found"}), 404
+
+        return jsonify({"success": True, "impact": impact})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/functions/<function_id>/dependencies', methods=['GET'])
+def get_function_dependencies(function_id):
+    """Get function dependencies (upstream or downstream)"""
+    if not supabase_client:
+        return jsonify({"success": False, "error": "Supabase not configured"}), 503
+
+    try:
+        direction = request.args.get('direction', 'downstream')  # 'upstream' or 'downstream'
+
+        dependencies = supabase_client.get_function_dependencies(function_id, direction)
+        return jsonify({"success": True, "dependencies": dependencies, "direction": direction})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 if __name__ == '__main__':

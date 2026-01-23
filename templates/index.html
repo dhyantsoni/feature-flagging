@@ -5,17 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Feature Flag Management Dashboard</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/ast-styles.css">
 </head>
 <body>
     <div class="container">
         <header>
             <h1>🚩 Feature Flag Management Dashboard</h1>
-            <div class="kill-switch-container">
-                <label class="switch">
-                    <input type="checkbox" id="killSwitch">
-                    <span class="slider"></span>
-                </label>
-                <span id="killSwitchLabel">Kill Switch: OFF</span>
+            <div class="header-actions">
+                <div class="project-selector">
+                    <select id="projectSelect">
+                        <option value="">Select Project...</option>
+                    </select>
+                    <button class="btn btn-sm" id="createProjectBtn">+ New Project</button>
+                </div>
+                <div class="kill-switch-container">
+                    <label class="switch">
+                        <input type="checkbox" id="killSwitch">
+                        <span class="slider"></span>
+                    </label>
+                    <span id="killSwitchLabel">Kill Switch: OFF</span>
+                </div>
             </div>
         </header>
 
@@ -177,5 +186,6 @@
     </div>
 
     <script src="/static/js/dashboard.js"></script>
+    <script src="/static/js/ast-analyzer.js"></script>
 </body>
 </html>
