@@ -9,67 +9,63 @@ from flask_cors import CORS
 import yaml
 import os
 import json
-import logging
 
-from feature_flag_client import FeatureFlagClient
-from supabase_client import SupabaseClient
-from enhanced_ast_analyzer import (
-    analyze_codebase_with_helpers,
-    get_functions_for_feature
-)
+# Import with error handling to prevent deployment failures
+try:
+    from feature_flag_client import FeatureFlagClient
+    from supabase_client import SupabaseClient
+    from enhanced_ast_analyzer import (
+        analyze_codebase_with_helpers,
+        get_functions_for_feature
+    )
+    IMPORTS_SUCCESSFUL = True
+except Exception as e:
+    print(f"Import error: {e}")
+    IMPORTS_SUCCESSFUL = False
+    FeatureFlagClient = None
+    SupabaseClient = None
 
 app = Flask(__name__)
 CORS(app)
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
-
-# Initialize clients
-ff_client = FeatureFlagClient()
+# Initialize clients with error handling
+ff_client = None
 supabase_client = None
-supabase_error = None
 
-# Initialize Supabase (optional, will be None if env vars not set)
-def init_supabase():
-    """Initialize Supabase client with error handling"""
-    global supabase_client, supabase_error
+if IMPORTS_SUCCESSFUL and FeatureFlagClient:
+    try:
+        ff_client = FeatureFlagClient()
+    except Exception as e:
+        print(f"Warning: FeatureFlagClient initialization failed: {e}")
+
+if IMPORTS_SUCCESSFUL and SupabaseClient:
     try:
         supabase_client = SupabaseClient()
-        logger.info("✓ Supabase client initialized successfully")
-        return True
-    except ValueError as e:
-        supabase_error = str(e)
-        logger.warning(f"⚠️  Supabase not configured: {supabase_error}")
-        return False
     except Exception as e:
-        supabase_error = f"Failed to connect to Supabase: {str(e)}"
-        logger.error(f"❌ {supabase_error}")
-        return False
-
-
-# Initialize on startup
-init_supabase()
+        print(f"Warning: Supabase not configured: {e}")
 
 
 # Frontend Routes
 @app.route('/')
 def index():
     """Serve the main dashboard."""
-    return render_template('dashboard.html')
+    return jsonify({
+        "message": "Feature Flagging API",
+        "version": "1.0",
+        "endpoints": {
+            "health": "/health",
+            "clients": "/api/clients",
+            "rulesets": "/api/rulesets",
+            "projects": "/api/projects"
+        }
+    })
 
 @app.route('/health')
 def health():
     """Health check endpoint."""
     return jsonify({
         "status": "healthy",
-        "supabase": {
-            "configured": supabase_client is not None,
-            "error": supabase_error
-        },
+        "supabase": supabase_client is not None,
         "endpoints": {
             "clients": "/api/clients",
             "rulesets": "/api/rulesets",
@@ -77,75 +73,6 @@ def health():
             "analyze": "/api/analyze",
             "functions": "/api/functions"
         }
-    })
-
-
-@app.route('/api/validate', methods=['GET'])
-def validate_integration():
-    """Validate Supabase integration and system health"""
-    from supabase_integration import SupabaseIntegration
-    
-    validation = {
-        "timestamp": str(__import__('datetime').datetime.now()),
-        "checks": {}
-    }
-    
-    # Environment check
-    url = os.environ.get("SUPABASE_URL")
-    key = os.environ.get("SUPABASE_KEY")
-    validation["checks"]["environment"] = {
-        "supabase_url_set": bool(url),
-        "supabase_key_set": bool(key),
-        "valid_url": url.startswith("https://") if url else False
-    }
-    
-    # Connection check
-    validation["checks"]["connection"] = {
-        "connected": supabase_client is not None,
-        "error": supabase_error
-    }
-    
-    # Tables check
-    if supabase_client:
-        tables_status = {}
-        required_tables = [
-            "projects", "functions", "features", "function_mappings",
-            "dependencies", "impact_analysis", "clients", "rulesets"
-        ]
-        
-        for table_name in required_tables:
-            try:
-                result = supabase_client.client.table(table_name).select("*").limit(0).execute()
-                tables_status[table_name] = "✓ exists"
-            except Exception as e:
-                tables_status[table_name] = f"✗ {str(e)[:50]}"
-        
-        validation["checks"]["tables"] = tables_status
-        
-        # Attempt basic operation
-        try:
-            projects = supabase_client.list_projects()
-            validation["checks"]["operations"] = {
-                "list_projects": "✓ success",
-                "project_count": len(projects) if projects else 0
-            }
-        except Exception as e:
-            validation["checks"]["operations"] = {
-                "list_projects": f"✗ {str(e)}"
-            }
-    else:
-        validation["checks"]["tables"] = "Cannot check - Supabase not connected"
-        validation["checks"]["operations"] = "Cannot check - Supabase not connected"
-    
-    all_ok = (
-        validation["checks"]["environment"]["supabase_url_set"] and
-        validation["checks"]["environment"]["supabase_key_set"] and
-        validation["checks"]["connection"]["connected"]
-    )
-    
-    return jsonify({
-        "success": all_ok,
-        "validation": validation
     })
 
 
@@ -593,281 +520,6 @@ def get_project_features(project_id):
     try:
         features = supabase_client.list_features(project_id)
         return jsonify({"success": True, "features": features})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-
-# ============================================================================
-# NEW: Ruleset Management Endpoints
-# ============================================================================
-
-@app.route('/api/rulesets', methods=['POST'])
-def create_ruleset():
-    """Create a new ruleset in Supabase"""
-    if not supabase_client:
-        return jsonify({"success": False, "error": "Supabase not configured"}), 503
-
-    try:
-        data = request.get_json()
-        name = data.get('name')
-        description = data.get('description', '')
-        features = data.get('features', [])
-        baseline_ruleset = data.get('baseline_ruleset')
-        rollout_percentage = data.get('rollout_percentage', 100)
-        metadata = data.get('metadata', {})
-
-        if not name:
-            return jsonify({"success": False, "error": "Ruleset name required"}), 400
-
-        ruleset = supabase_client.create_ruleset(
-            name=name,
-            description=description,
-            features=features,
-            baseline_ruleset=baseline_ruleset,
-            rollout_percentage=rollout_percentage,
-            metadata=metadata
-        )
-
-        return jsonify({"success": True, "ruleset": ruleset})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-
-@app.route('/api/rulesets/<ruleset_id>', methods=['GET'])
-def get_ruleset(ruleset_id):
-    """Get a specific ruleset"""
-    if not supabase_client:
-        return jsonify({"success": False, "error": "Supabase not configured"}), 503
-
-    try:
-        ruleset = supabase_client.get_ruleset(ruleset_id)
-        if not ruleset:
-            return jsonify({"success": False, "error": "Ruleset not found"}), 404
-        return jsonify({"success": True, "ruleset": ruleset})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-
-@app.route('/api/rulesets', methods=['GET'])
-def list_rulesets():
-    """List all rulesets"""
-    if not supabase_client:
-        return jsonify({"success": False, "error": "Supabase not configured"}), 503
-
-    try:
-        rulesets = supabase_client.list_rulesets()
-        return jsonify({"success": True, "rulesets": rulesets})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-
-@app.route('/api/rulesets/<ruleset_id>', methods=['PUT'])
-def update_ruleset(ruleset_id):
-    """Update an existing ruleset"""
-    if not supabase_client:
-        return jsonify({"success": False, "error": "Supabase not configured"}), 503
-
-    try:
-        data = request.get_json()
-        ruleset = supabase_client.update_ruleset(ruleset_id, data)
-        if not ruleset:
-            return jsonify({"success": False, "error": "Ruleset not found"}), 404
-        return jsonify({"success": True, "ruleset": ruleset})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-
-@app.route('/api/rulesets/<ruleset_id>', methods=['DELETE'])
-def delete_ruleset(ruleset_id):
-    """Delete a ruleset"""
-    if not supabase_client:
-        return jsonify({"success": False, "error": "Supabase not configured"}), 503
-
-    try:
-        success = supabase_client.delete_ruleset(ruleset_id)
-        if not success:
-            return jsonify({"success": False, "error": "Ruleset not found"}), 404
-        return jsonify({"success": True, "message": "Ruleset deleted"})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-
-# ============================================================================
-# NEW: Full Project AST Analysis & Graph Visualization
-# ============================================================================
-
-@app.route('/api/projects/<project_id>/analyze-full', methods=['POST'])
-def analyze_full_project(project_id):
-    """
-    Analyze entire project and generate full call graph.
-    Supports both file uploads and local directory scanning.
-    
-    Request body:
-    {
-        "directory_path": "path/to/project",  # or upload files
-        "include_patterns": ["*.py"],  # default
-        "exclude_patterns": ["test_*.py", "*_test.py"]
-    }
-    """
-    if not supabase_client:
-        return jsonify({"success": False, "error": "Supabase not configured"}), 503
-
-    try:
-        from pathlib import Path
-        import tempfile
-        from enhanced_ast_analyzer import analyze_full_codebase
-        
-        data = request.get_json() or {}
-        directory_path = data.get('directory_path')
-        include_patterns = data.get('include_patterns', ['*.py'])
-        exclude_patterns = data.get('exclude_patterns', ['test_*.py', '*_test.py', '__pycache__'])
-
-        if not directory_path:
-            return jsonify({"success": False, "error": "directory_path required"}), 400
-
-        # Check if directory exists
-        if not os.path.isdir(directory_path):
-            return jsonify({"success": False, "error": "Directory not found"}), 404
-
-        # Run full codebase analysis
-        analysis_result = analyze_full_codebase(
-            directory_path=directory_path,
-            include_patterns=include_patterns,
-            exclude_patterns=exclude_patterns
-        )
-
-        # Save graph to Supabase
-        graph_record = supabase_client.save_function_graph(
-            project_id=project_id,
-            file_path="<full_project>",
-            graph_data={
-                "call_graph": analysis_result["call_graph"],
-                "modules": analysis_result["modules"]
-            },
-            total_functions=analysis_result["statistics"]["total_functions"],
-            total_calls=analysis_result["statistics"]["total_calls"],
-            metadata={**analysis_result["statistics"], "analysis_type": "full_project"}
-        )
-
-        # Save all functions
-        for file_path, functions in analysis_result.get("all_functions", {}).items():
-            for func_data in functions:
-                func_name = func_data.get("name")
-                is_flagged = func_name in analysis_result.get("feature_flags", {})
-                is_helper = func_name in analysis_result.get("helper_functions", set())
-                is_shared = func_name in analysis_result.get("shared_helpers", set())
-
-                supabase_client.save_function(
-                    project_id=project_id,
-                    function_name=func_name,
-                    file_path=file_path,
-                    is_feature_flagged=is_flagged,
-                    is_helper=is_helper,
-                    is_shared_helper=is_shared,
-                    line_number=func_data.get("line_number"),
-                    complexity_score=func_data.get("complexity", 1),
-                    metadata={
-                        "class": func_data.get("class"),
-                        "decorators": func_data.get("decorators", [])
-                    }
-                )
-
-        return jsonify({
-            "success": True,
-            "analysis": {
-                "graph_id": graph_record.get("id") if graph_record else None,
-                "statistics": analysis_result["statistics"],
-                "total_files": len(analysis_result["all_functions"]),
-                "features": list(set(analysis_result.get("feature_flags", {}).values())),
-                "modules": analysis_result.get("modules", [])
-            }
-        })
-
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return jsonify({"success": False, "error": str(e)}), 500
-
-
-@app.route('/api/projects/<project_id>/graph/visualize', methods=['GET'])
-def visualize_project_graph(project_id):
-    """
-    Generate SVG/PNG visualization of project call graph.
-    
-    Query params:
-    - format: 'svg' or 'png' (default: svg)
-    - highlight_feature: optional feature name to highlight
-    """
-    if not supabase_client:
-        return jsonify({"success": False, "error": "Supabase not configured"}), 503
-
-    try:
-        import base64
-        from io import BytesIO
-        from enhanced_ast_analyzer import create_graph_visualization
-        
-        graph_format = request.args.get('format', 'svg')
-        highlight_feature = request.args.get('highlight_feature')
-
-        # Get the latest graph for this project
-        graph_record = supabase_client.get_function_graph(project_id)
-        if not graph_record:
-            return jsonify({"success": False, "error": "No graph analysis found for project"}), 404
-
-        call_graph = graph_record.get("graph_data", {}).get("call_graph", {})
-        
-        # Generate visualization
-        viz_data = create_graph_visualization(
-            call_graph=call_graph,
-            format=graph_format,
-            highlight_feature=highlight_feature
-        )
-
-        if graph_format == 'svg':
-            return jsonify({
-                "success": True,
-                "format": "svg",
-                "data": viz_data
-            })
-        else:
-            # PNG - return as base64
-            img_base64 = base64.b64encode(viz_data).decode('utf-8')
-            return jsonify({
-                "success": True,
-                "format": "png",
-                "data": img_base64
-            })
-
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return jsonify({"success": False, "error": str(e)}), 500
-
-
-@app.route('/api/projects/<project_id>/graph/data', methods=['GET'])
-def get_project_graph_data(project_id):
-    """
-    Get raw graph data for interactive visualization on frontend.
-    Returns nodes and edges for D3.js or similar.
-    """
-    if not supabase_client:
-        return jsonify({"success": False, "error": "Supabase not configured"}), 503
-
-    try:
-        graph_record = supabase_client.get_function_graph(project_id)
-        if not graph_record:
-            return jsonify({"success": False, "error": "No graph analysis found"}), 404
-
-        from enhanced_ast_analyzer import convert_to_d3_format
-        
-        call_graph = graph_record.get("graph_data", {}).get("call_graph", {})
-        d3_data = convert_to_d3_format(call_graph)
-
-        return jsonify({
-            "success": True,
-            "graph": d3_data
-        })
-
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 

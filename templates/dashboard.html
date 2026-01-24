@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feature Flag Dashboard</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>🎯 Feature Flag Dashboard</h1>
+            <div class="header-actions">
+                <div class="project-selector">
+                    <select id="projectSelect" onchange="selectProject()">
+                        <option value="">Select Project...</option>
+                    </select>
+                    <button class="btn btn-sm btn-primary" onclick="showCreateProjectModal()">+ New Project</button>
+                </div>
+                <button class="btn btn-primary" onclick="showRulesetBuilder()">⚙️ Rulesets</button>
+                <div class="kill-switch-container">
+                    <label class="switch">
+                        <input type="checkbox" id="killSwitch" onchange="toggleKillSwitch()">
+                        <span class="slider"></span>
+                    </label>
+                    <span id="killSwitchLabel">Kill Switch: OFF</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <h2>Navigation</h2>
+                <div class="search-box">
+                    <input type="text" id="clientSearch" placeholder="Search clients..." onkeyup="filterClients()">
+                </div>
+                <div id="clientList" class="client-list">
+                    <div class="loading"><span class="spinner"></span></div>
+                </div>
+                <button class="btn btn-primary" onclick="showCreateClientModal()">+ New Client</button>
+            </aside>
+
+            <!-- Main Panel -->
+            <main class="details-panel">
+                <div id="welcomeMessage" class="welcome-message">
+                    <h2>Welcome to Feature Flagging</h2>
+                    <p>Select a project or client to manage features and rulesets</p>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3 id="totalClients">0</h3>
+                            <p>Total Clients</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3 id="totalRulesets">0</h3>
+                            <p>Rulesets</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3 id="totalProjects">0</h3>
+                            <p>Projects</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3 id="killSwitchStatus">OFF</h3>
+                            <p>Kill Switch</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="projectView" style="display: none;">
+                    <h2 id="projectName"></h2>
+                    <div class="tabs">
+                        <button class="tab active" onclick="switchTab('overview')">Overview</button>
+                        <button class="tab" onclick="switchTab('functions')">Functions</button>
+                        <button class="tab" onclick="switchTab('graph')">Call Graph</button>
+                    </div>
+
+                    <div id="overview" class="tab-content active">
+                        <div class="stat-card" style="background: linear-gradient(135deg, #ffe4f0, #fff5fa);">
+                            <p><strong>Repository:</strong> <span id="projectRepo">-</span></p>
+                            <p><strong>Files Analyzed:</strong> <span id="projectFiles">0</span></p>
+                            <p><strong>Total Functions:</strong> <span id="projectFunctions">0</span></p>
+                            <p><strong>Features:</strong> <span id="projectFeatures">0</span></p>
+                        </div>
+                        <button class="btn btn-primary" onclick="analyzeProject()">🔍 Analyze Project</button>
+                    </div>
+
+                    <div id="functions" class="tab-content" style="display: none;">
+                        <h3>Project Functions</h3>
+                        <div id="functionsList" class="feature-list"></div>
+                    </div>
+
+                    <div id="graph" class="tab-content" style="display: none;">
+                        <h3>Call Graph Visualization</h3>
+                        <svg id="graphSvg" style="width: 100%; height: 600px; border: 2px solid #ffb6d9; border-radius: 8px;"></svg>
+                    </div>
+                </div>
+
+                <div id="clientDetails" style="display: none;">
+                    <div class="client-header">
+                        <div>
+                            <h2 id="clientName">Client Name</h2>
+                            <p id="clientId" class="client-id">client_id</p>
+                        </div>
+                        <div class="client-tier">
+                            <span id="clientTier" class="tier-badge">Tier</span>
+                        </div>
+                    </div>
+
+                    <div class="client-info">
+                        <div class="info-row">
+                            <span class="info-label">Current Ruleset:</span>
+                            <span id="currentRuleset" class="info-value">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Features:</span>
+                            <span id="featureCount" class="info-value">0</span>
+                        </div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn btn-secondary" onclick="showChangeRulesetModal()">Change Ruleset</button>
+                        <button class="btn btn-danger" onclick="deleteClient()">Delete Client</button>
+                    </div>
+
+                    <div class="features-section">
+                        <h3>Available Features</h3>
+                        <div id="featureList" class="feature-list"></div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modals -->
+
+    <!-- Create Project Modal -->
+    <div id="createProjectModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Create New Project</div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Project Name</label>
+                    <input type="text" id="projectNameInput" placeholder="e.g., My Awesome App">
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="projectDescInput" placeholder="Project description..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Repository URL</label>
+                    <input type="text" id="projectRepoInput" placeholder="https://github.com/...">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('createProjectModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="createProject()">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Client Modal -->
+    <div id="createClientModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Add New Client</div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Client ID</label>
+                    <input type="text" id="clientIdInput" placeholder="e.g., client_123">
+                </div>
+                <div class="form-group">
+                    <label>Select Ruleset</label>
+                    <select id="rulesetSelect"></select>
+                </div>
+                <div class="form-group">
+                    <label>Tier</label>
+                    <select id="tierSelect">
+                        <option>free</option>
+                        <option>pro</option>
+                        <option>enterprise</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('createClientModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="createClient()">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ruleset Builder Modal -->
+    <div id="rulesetBuilderModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">Ruleset Builder</div>
+            <div class="modal-body">
+                <div class="tabs">
+                    <button class="tab active" onclick="switchRulesetTab('create')">Create Ruleset</button>
+                    <button class="tab" onclick="switchRulesetTab('manage')">Manage Rulesets</button>
+                </div>
+
+                <div id="createRuleset" class="tab-content active">
+                    <div class="form-group">
+                        <label>Ruleset Name</label>
+                        <input type="text" id="rulesetNameInput" placeholder="e.g., premium_tier">
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="rulesetDescInput" placeholder="Ruleset description..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Rollout Percentage</label>
+                        <input type="number" id="rolloutPercentage" min="0" max="100" value="100">
+                    </div>
+                    <div class="form-group">
+                        <label>Features (comma-separated)</label>
+                        <textarea id="rulesetFeaturesInput" placeholder="feature1, feature2, feature3"></textarea>
+                    </div>
+                    <button class="btn btn-primary" onclick="createRuleset()">Create Ruleset</button>
+                </div>
+
+                <div id="manageRulesets" class="tab-content" style="display: none;">
+                    <div id="rulesetsList"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('rulesetBuilderModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Ruleset Modal -->
+    <div id="changeRulesetModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Change Client Ruleset</div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Select New Ruleset</label>
+                    <select id="newRulesetSelect"></select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('changeRulesetModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="changeClientRuleset()">Update</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>

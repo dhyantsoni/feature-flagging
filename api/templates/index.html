@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feature Flag Management Dashboard</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/ast-styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚩 Feature Flag Management Dashboard</h1>
+            <div class="header-actions">
+                <div class="project-selector">
+                    <select id="projectSelect">
+                        <option value="">Select Project...</option>
+                    </select>
+                    <button class="btn btn-sm" id="createProjectBtn">+ New Project</button>
+                </div>
+                <div class="kill-switch-container">
+                    <label class="switch">
+                        <input type="checkbox" id="killSwitch">
+                        <span class="slider"></span>
+                    </label>
+                    <span id="killSwitchLabel">Kill Switch: OFF</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <!-- Sidebar with client list -->
+            <aside class="sidebar">
+                <h2>Clients</h2>
+                <div class="search-box">
+                    <input type="text" id="clientSearch" placeholder="Search clients...">
+                </div>
+                <div id="clientList" class="client-list">
+                    <div class="loading">Loading clients...</div>
+                </div>
+                <button class="btn btn-primary" id="addClientBtn">+ Add New Client</button>
+            </aside>
+
+            <!-- Main panel with client details -->
+            <main class="details-panel">
+                <div id="welcomeMessage" class="welcome-message">
+                    <h2>Welcome to Feature Flag Management</h2>
+                    <p>Select a client from the list to view their features and manage their ruleset.</p>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3 id="totalClients">0</h3>
+                            <p>Total Clients</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3 id="totalRulesets">0</h3>
+                            <p>Rulesets</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3 id="killSwitchStatus">Inactive</h3>
+                            <p>Kill Switch</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="clientDetails" class="client-details" style="display: none;">
+                    <div class="client-header">
+                        <div>
+                            <h2 id="clientName">Client Name</h2>
+                            <p id="clientId" class="client-id">client_id</p>
+                        </div>
+                        <div class="client-tier">
+                            <span id="clientTier" class="tier-badge">Tier</span>
+                        </div>
+                    </div>
+
+                    <div class="client-info">
+                        <div class="info-row">
+                            <span class="info-label">Current Ruleset:</span>
+                            <span id="currentRuleset" class="info-value">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Ruleset Description:</span>
+                            <span id="rulesetDescription" class="info-value">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Contact:</span>
+                            <span id="clientContact" class="info-value">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Signup Date:</span>
+                            <span id="clientSignupDate" class="info-value">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Total Features:</span>
+                            <span id="featureCount" class="info-value">0</span>
+                        </div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn btn-secondary" id="changeRulesetBtn">Change Ruleset</button>
+                        <button class="btn btn-secondary" id="testFeatureBtn">Test Feature</button>
+                    </div>
+
+                    <div class="features-section">
+                        <h3>Available Features</h3>
+                        <div id="featuresList" class="features-list">
+                            <!-- Features will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal for changing ruleset -->
+    <div id="changeRulesetModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Change Ruleset</h2>
+            <p>Select a new ruleset for <strong id="modalClientName"></strong>:</p>
+            <select id="rulesetSelect" class="form-select">
+                <!-- Options will be populated dynamically -->
+            </select>
+            <div class="modal-buttons">
+                <button class="btn btn-primary" id="confirmRulesetChange">Update Ruleset</button>
+                <button class="btn btn-secondary" id="cancelRulesetChange">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for adding new client -->
+    <div id="addClientModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Add New Client</h2>
+            <form id="addClientForm">
+                <div class="form-group">
+                    <label for="newClientId">Client ID:</label>
+                    <input type="text" id="newClientId" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="newClientName">Client Name:</label>
+                    <input type="text" id="newClientName" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="newClientRuleset">Ruleset:</label>
+                    <select id="newClientRuleset" class="form-select" required>
+                        <!-- Options will be populated dynamically -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="newClientContact">Contact Email:</label>
+                    <input type="email" id="newClientContact" class="form-input">
+                </div>
+                <div class="modal-buttons">
+                    <button type="submit" class="btn btn-primary">Create Client</button>
+                    <button type="button" class="btn btn-secondary" id="cancelAddClient">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for testing feature -->
+    <div id="testFeatureModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Test Feature Access</h2>
+            <form id="testFeatureForm">
+                <div class="form-group">
+                    <label for="testFeatureName">Feature Name:</label>
+                    <input type="text" id="testFeatureName" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="testUserId">User ID (optional):</label>
+                    <input type="text" id="testUserId" class="form-input" placeholder="For percentage rollouts">
+                </div>
+                <div class="modal-buttons">
+                    <button type="submit" class="btn btn-primary">Test Feature</button>
+                    <button type="button" class="btn btn-secondary" id="cancelTestFeature">Cancel</button>
+                </div>
+            </form>
+            <div id="testResult" class="test-result" style="display: none;">
+                <!-- Test result will appear here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/dashboard.js"></script>
+    <script src="/static/js/ast-analyzer.js"></script>
+</body>
+</html>

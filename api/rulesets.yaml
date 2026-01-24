@@ -1,0 +1,160 @@
+# Feature Flag Rulesets Configuration
+#
+# Each ruleset defines a set of features that clients assigned to it can access.
+# Clients are assigned to rulesets, and if a feature fails, they fall back to baseline.
+
+# Baseline Ruleset - Core features available to ALL clients as fallback
+baseline:
+  description: "Baseline feature set - core functionality only"
+  features:
+    - basic_dashboard
+    - user_management
+    - basic_reports
+    - profile_settings
+
+# Free Tier Ruleset - For free/trial clients
+free_tier:
+  description: "Free tier with limited features"
+  baseline_ruleset: baseline
+  features:
+    basic_dashboard: true
+    user_management:
+      enabled: true
+      max_users: 5
+    basic_reports: true
+    profile_settings: true
+    email_notifications: true
+
+# Starter Tier Ruleset - Entry-level paid clients
+starter_tier:
+  description: "Starter paid tier with enhanced features"
+  baseline_ruleset: baseline
+  features:
+    basic_dashboard: true
+    enhanced_dashboard:
+      enabled: true
+      percentage: 100
+    user_management:
+      enabled: true
+      max_users: 20
+    basic_reports: true
+    advanced_reports: true
+    profile_settings: true
+    email_notifications: true
+    slack_integration: true
+    api_access:
+      enabled: true
+      rate_limit: 1000
+
+# Professional Tier Ruleset - Mid-tier clients
+professional_tier:
+  description: "Professional tier with advanced features"
+  baseline_ruleset: baseline
+  features:
+    basic_dashboard: true
+    enhanced_dashboard: true
+    user_management:
+      enabled: true
+      max_users: 100
+    basic_reports: true
+    advanced_reports: true
+    custom_reports: true
+    profile_settings: true
+    email_notifications: true
+    slack_integration: true
+    teams_integration: true
+    api_access:
+      enabled: true
+      rate_limit: 10000
+    white_labeling:
+      enabled: true
+      percentage: 100
+    advanced_analytics: true
+    export_data: true
+
+# Enterprise Tier Ruleset - Full-featured for enterprise clients
+enterprise_tier:
+  description: "Enterprise tier with all features"
+  baseline_ruleset: baseline
+  features:
+    basic_dashboard: true
+    enhanced_dashboard: true
+    enterprise_dashboard: true
+    user_management:
+      enabled: true
+      max_users: -1  # unlimited
+    basic_reports: true
+    advanced_reports: true
+    custom_reports: true
+    real_time_reports: true
+    profile_settings: true
+    email_notifications: true
+    slack_integration: true
+    teams_integration: true
+    webhook_notifications: true
+    api_access:
+      enabled: true
+      rate_limit: -1  # unlimited
+    white_labeling: true
+    advanced_analytics: true
+    predictive_analytics: true
+    export_data: true
+    bulk_import: true
+    sso_authentication: true
+    audit_logs: true
+    dedicated_support: true
+    custom_integrations: true
+
+# Beta Tier - For testing new features with select clients
+beta_tier:
+  description: "Beta testing tier with experimental features"
+  baseline_ruleset: professional_tier
+  features:
+    basic_dashboard: true
+    enhanced_dashboard: true
+    experimental_dashboard:
+      enabled: true
+      percentage: 50  # Gradual rollout to 50% of users
+    user_management:
+      enabled: true
+      max_users: 50
+    basic_reports: true
+    advanced_reports: true
+    custom_reports: true
+    ai_insights:
+      enabled: true
+      percentage: 30  # Testing with 30% of users
+    profile_settings: true
+    email_notifications: true
+    slack_integration: true
+    api_access:
+      enabled: true
+      rate_limit: 5000
+    advanced_analytics: true
+    export_data: true
+    new_feature_preview: true
+
+# Custom Tier - Fully customizable for special clients
+custom_tier:
+  description: "Custom feature set for special clients"
+  baseline_ruleset: baseline
+  features:
+    basic_dashboard: true
+    enhanced_dashboard: true
+    user_management:
+      enabled: true
+      max_users: 200
+    basic_reports: true
+    advanced_reports: true
+    custom_reports: true
+    profile_settings: true
+    email_notifications: true
+    slack_integration: true
+    teams_integration: true
+    api_access:
+      enabled: true
+      rate_limit: 20000
+    white_labeling: true
+    advanced_analytics: true
+    export_data: true
+    # Note: Can be easily customized per client

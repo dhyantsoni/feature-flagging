@@ -1,0 +1,12 @@
+__pycache__
+*.pyc
+.git
+.gitignore
+README.md
+DEPLOYMENT.md
+QUICKSTART.md
+.env
+.env.local
+*.egg-info
+dist
+build

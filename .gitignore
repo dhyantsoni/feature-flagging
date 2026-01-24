@@ -49,3 +49,6 @@ callgraph_viz.png
 callgraph_viz.svg
 enhanced_analysis.json
 feature_impact_*.png
+.env*.local
+
+*node_modules/
