@@ -2,11 +2,32 @@ __pycache__
 *.pyc
 .git
 .gitignore
-README.md
-DEPLOYMENT.md
-QUICKSTART.md
 .env
 .env.local
+.claude/
+.vercel/
+node_modules/
 *.egg-info
 dist
 build
+.pytest_cache
+*.log
+
+# Documentation (not needed in production)
+README.md
+DEPLOYMENT.md
+QUICKSTART.md
+IMPLEMENTATION.md
+INTEGRATION_SUMMARY.md
+README_SUPABASE.md
+SETUP_CHECKLIST.md
+SUPABASE_INTEGRATION.md
+QUICK_REFERENCE.md
+
+# Development files
+api/
+e2e_workflow.py
+supabase_integration.py
+visualize_graph.py
+ast_callgraph_analyzer.py
+bootstrap_defaults.json
