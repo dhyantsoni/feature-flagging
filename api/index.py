@@ -69,8 +69,19 @@ def index():
     """Serve the dashboard frontend"""
     try:
         return render_template('dashboard.html')
-    except:
-        return render_template('index.html')
+    except Exception as e:
+        logger.warning(f"Failed to render dashboard.html: {e}")
+        try:
+            return render_template('index.html')
+        except Exception as e2:
+            logger.error(f"Failed to render index.html: {e2}")
+            # Fallback to API response if templates fail
+            return jsonify({
+                "message": "Feature Flagging Dashboard",
+                "status": "running",
+                "note": "Templates not available",
+                "api_url": "/api"
+            })
 
 @app.route('/api')
 def api_info():
@@ -310,3 +321,10 @@ logger.info("=" * 50)
 if __name__ == '__main__':
     logger.info("Running Flask app locally...")
     app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+
+# Export app for Vercel
+# This is required for Vercel's @vercel/python serverless runtime
+application = app
+
+# This is the handler that Vercel will call
+handler = app
