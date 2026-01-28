@@ -9,6 +9,20 @@ from flask_cors import CORS
 import yaml
 import os
 import json
+import sys
+from pathlib import Path
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+CURRENT_DIR = Path(__file__).parent
+ROOT_DIR = CURRENT_DIR.parent
+sys.path.insert(0, str(CURRENT_DIR))
+sys.path.insert(0, str(ROOT_DIR))
 
 # Import with error handling to prevent deployment failures
 try:
@@ -20,12 +34,17 @@ try:
     )
     IMPORTS_SUCCESSFUL = True
 except Exception as e:
-    print(f"Import error: {e}")
+    logger.error(f"Import error: {e}")
     IMPORTS_SUCCESSFUL = False
     FeatureFlagClient = None
     SupabaseClient = None
 
-app = Flask(__name__)
+app = Flask(
+    __name__,
+    template_folder=str(ROOT_DIR / 'templates'),
+    static_folder=str(ROOT_DIR / 'static'),
+    static_url_path='/static'
+)
 CORS(app)
 
 # Initialize clients with error handling
@@ -34,31 +53,41 @@ supabase_client = None
 
 if IMPORTS_SUCCESSFUL and FeatureFlagClient:
     try:
-        ff_client = FeatureFlagClient()
+        ff_client = FeatureFlagClient(
+            config_path=str(CURRENT_DIR / 'rulesets.yaml'),
+            clients_path=str(CURRENT_DIR / 'clients.yaml'),
+            bootstrap_path=str(CURRENT_DIR / 'bootstrap_defaults.json')
+        )
+        logger.info("✓ FeatureFlagClient initialized")
     except Exception as e:
-        print(f"Warning: FeatureFlagClient initialization failed: {e}")
+        logger.warning(f"⚠️ FeatureFlagClient initialization failed: {e}")
 
 if IMPORTS_SUCCESSFUL and SupabaseClient:
     try:
         supabase_client = SupabaseClient()
+        logger.info("✓ SupabaseClient initialized")
     except Exception as e:
-        print(f"Warning: Supabase not configured: {e}")
+        logger.warning(f"⚠️ Supabase not configured: {e}")
 
 
 # Frontend Routes
 @app.route('/')
 def index():
     """Serve the main dashboard."""
-    return jsonify({
-        "message": "Feature Flagging API",
-        "version": "1.0",
-        "endpoints": {
-            "health": "/health",
-            "clients": "/api/clients",
-            "rulesets": "/api/rulesets",
-            "projects": "/api/projects"
-        }
-    })
+    try:
+        return render_template('dashboard.html')
+    except Exception:
+        # Fallback to simple JSON if templates are not available
+        return jsonify({
+            "message": "Feature Flagging API",
+            "version": "1.0",
+            "endpoints": {
+                "health": "/health",
+                "clients": "/api/clients",
+                "rulesets": "/api/rulesets",
+                "projects": "/api/projects"
+            }
+        })
 
 @app.route('/health')
 def health():
@@ -66,6 +95,7 @@ def health():
     return jsonify({
         "status": "healthy",
         "supabase": supabase_client is not None,
+        "feature_flags": ff_client is not None,
         "endpoints": {
             "clients": "/api/clients",
             "rulesets": "/api/rulesets",
@@ -252,13 +282,13 @@ def get_kill_switch_status():
 def _update_client_yaml(client_id, new_ruleset):
     """Update client ruleset in YAML file."""
     try:
-        with open('clients.yaml', 'r') as f:
+        with open(CURRENT_DIR / 'clients.yaml', 'r') as f:
             clients = yaml.safe_load(f) or {}
 
         if client_id in clients:
             clients[client_id]['ruleset'] = new_ruleset
 
-        with open('clients.yaml', 'w') as f:
+        with open(CURRENT_DIR / 'clients.yaml', 'w') as f:
             yaml.dump(clients, f, default_flow_style=False, sort_keys=False)
 
     except Exception as e:
@@ -268,7 +298,7 @@ def _update_client_yaml(client_id, new_ruleset):
 def _add_client_to_yaml(client_id, ruleset, metadata):
     """Add new client to YAML file."""
     try:
-        with open('clients.yaml', 'r') as f:
+        with open(CURRENT_DIR / 'clients.yaml', 'r') as f:
             clients = yaml.safe_load(f) or {}
 
         clients[client_id] = {
@@ -276,7 +306,7 @@ def _add_client_to_yaml(client_id, ruleset, metadata):
             'metadata': metadata
         }
 
-        with open('clients.yaml', 'w') as f:
+        with open(CURRENT_DIR / 'clients.yaml', 'w') as f:
             yaml.dump(clients, f, default_flow_style=False, sort_keys=False)
 
     except Exception as e:
