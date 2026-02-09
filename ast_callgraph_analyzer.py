@@ -39,10 +39,16 @@ class CallGraphAnalyzer(ast.NodeVisitor):
 
         self.functions.add(func_name)
 
-        # Check for feature flag decorator
+        # Check for feature flag decorator (supports both @feature_flag and @require_feature)
         for decorator in node.decorator_list:
             if isinstance(decorator, ast.Call):
-                if hasattr(decorator.func, 'id') and decorator.func.id == 'feature_flag':
+                decorator_name = None
+                if hasattr(decorator.func, 'id'):
+                    decorator_name = decorator.func.id
+                elif hasattr(decorator.func, 'attr'):
+                    decorator_name = decorator.func.attr
+
+                if decorator_name in ('feature_flag', 'require_feature'):
                     if decorator.args:
                         flag_name = ast.literal_eval(decorator.args[0])
                         self.feature_flags[func_name] = flag_name

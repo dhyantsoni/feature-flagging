@@ -3,10 +3,12 @@ Rule Set Engine for Feature Flagging System
 
 Maps clients to rulesets, which define available features.
 Supports baseline fallback when features fail.
+Enhanced with targeting rules and scheduling support.
 """
 
 import hashlib
-from typing import Dict, List, Any, Optional, Set
+from datetime import datetime, timezone
+from typing import Dict, List, Any, Optional, Set, Tuple
 from enum import Enum
 
 
@@ -150,6 +152,7 @@ class ClientManager:
 class RulesetEngine:
     """
     Core engine managing rulesets and evaluating feature access.
+    Enhanced with targeting rules and scheduling support.
     """
 
     def __init__(self, baseline_ruleset_name: str = "baseline"):
@@ -163,6 +166,23 @@ class RulesetEngine:
         self.client_manager = ClientManager()
         self.baseline_ruleset_name = baseline_ruleset_name
         self._use_baseline = False  # Global kill switch
+
+        # Optional enhanced engines (lazy loaded)
+        self._targeting_engine = None
+        self._schedule_engine = None
+        self._audit_logger = None
+
+    def set_targeting_engine(self, engine):
+        """Set the targeting rules engine."""
+        self._targeting_engine = engine
+
+    def set_schedule_engine(self, engine):
+        """Set the scheduling engine."""
+        self._schedule_engine = engine
+
+    def set_audit_logger(self, logger):
+        """Set the audit logger."""
+        self._audit_logger = logger
 
     def load_ruleset(self, name: str, config: Dict[str, Any]) -> None:
         """
@@ -209,17 +229,18 @@ class RulesetEngine:
         """
         Check if a feature is enabled for a specific client.
 
-        This checks:
+        Evaluation order:
         1. Global kill switch (forces baseline)
-        2. Client's assigned ruleset
-        3. Feature availability in ruleset
-        4. Per-feature rollout percentage (if configured)
-        5. Falls back to baseline on failure
+        2. Schedule overrides (time-based)
+        3. Targeting rules (user attribute-based)
+        4. Client's assigned ruleset
+        5. Per-feature rollout percentage
+        6. Baseline fallback on failure
 
         Args:
             client_id: Client identifier
             feature_name: Feature to check
-            user_context: Optional user context for percentage rollouts
+            user_context: Optional user context for percentage rollouts and targeting
 
         Returns:
             True if feature is enabled, False otherwise
@@ -237,6 +258,31 @@ class RulesetEngine:
                 return self._check_baseline_feature(feature_name)
 
             ruleset = self.rulesets[ruleset_name]
+
+            # Check schedule overrides first
+            if self._schedule_engine:
+                schedule_result, _ = self._schedule_engine.evaluate(
+                    feature_name, client_id, ruleset_name
+                )
+                if schedule_result is not None:
+                    return schedule_result
+
+            # Check targeting rules
+            if self._targeting_engine and user_context:
+                # Add client context for targeting
+                enhanced_context = {
+                    **user_context,
+                    "client_id": client_id,
+                    "ruleset": ruleset_name
+                }
+                action, variant = self._targeting_engine.evaluate(
+                    feature_name, enhanced_context, ruleset_name
+                )
+                if action == "enable":
+                    return True
+                elif action == "disable":
+                    return False
+                # action == "variant" or None continues to normal evaluation
 
             # Check if feature exists in ruleset
             if not ruleset.has_feature(feature_name):
@@ -261,6 +307,96 @@ class RulesetEngine:
             # On any error, fall back to baseline
             print(f"Error evaluating feature '{feature_name}' for client '{client_id}': {e}")
             return self._check_baseline_feature(feature_name)
+
+    def is_feature_enabled_detailed(
+        self,
+        client_id: str,
+        feature_name: str,
+        user_context: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """
+        Check if feature is enabled with detailed evaluation info.
+
+        Returns:
+            Dict with 'enabled', 'reason', 'source', and other debug info
+        """
+        result = {
+            "enabled": False,
+            "reason": "unknown",
+            "source": "baseline",
+            "feature_name": feature_name,
+            "client_id": client_id,
+            "ruleset": None,
+            "schedule": None,
+            "targeting_rule": None
+        }
+
+        try:
+            if self._use_baseline:
+                result["enabled"] = self._check_baseline_feature(feature_name)
+                result["reason"] = "kill_switch_active"
+                result["source"] = "kill_switch"
+                return result
+
+            ruleset_name = self.client_manager.get_client_ruleset(client_id)
+            result["ruleset"] = ruleset_name
+
+            if not ruleset_name or ruleset_name not in self.rulesets:
+                result["enabled"] = self._check_baseline_feature(feature_name)
+                result["reason"] = "client_not_found" if not ruleset_name else "invalid_ruleset"
+                result["source"] = "baseline"
+                return result
+
+            # Check schedule
+            if self._schedule_engine:
+                schedule_result, schedule = self._schedule_engine.evaluate(
+                    feature_name, client_id, ruleset_name
+                )
+                if schedule_result is not None:
+                    result["enabled"] = schedule_result
+                    result["reason"] = "schedule_override"
+                    result["source"] = "schedule"
+                    result["schedule"] = {"id": schedule.id, "type": schedule.schedule_type}
+                    return result
+
+            # Check targeting
+            if self._targeting_engine and user_context:
+                enhanced_context = {**user_context, "client_id": client_id, "ruleset": ruleset_name}
+                action, variant = self._targeting_engine.evaluate(feature_name, enhanced_context, ruleset_name)
+                if action in ("enable", "disable"):
+                    result["enabled"] = action == "enable"
+                    result["reason"] = f"targeting_rule_{action}"
+                    result["source"] = "targeting"
+                    return result
+
+            # Normal ruleset evaluation
+            ruleset = self.rulesets[ruleset_name]
+            if not ruleset.has_feature(feature_name):
+                result["enabled"] = self._check_baseline_feature(feature_name)
+                result["reason"] = "feature_not_in_ruleset"
+                result["source"] = "baseline"
+                return result
+
+            feature_config = ruleset.features.get(feature_name, {})
+            if isinstance(feature_config, dict):
+                percentage = feature_config.get("percentage", 100)
+                if percentage < 100 and user_context:
+                    if not self._passes_percentage_check(client_id, feature_name, percentage, user_context):
+                        result["enabled"] = self._check_baseline_feature(feature_name)
+                        result["reason"] = f"percentage_rollout_{percentage}%"
+                        result["source"] = "percentage"
+                        return result
+
+            result["enabled"] = True
+            result["reason"] = "ruleset_enabled"
+            result["source"] = "ruleset"
+            return result
+
+        except Exception as e:
+            result["enabled"] = self._check_baseline_feature(feature_name)
+            result["reason"] = f"error: {str(e)}"
+            result["source"] = "error_fallback"
+            return result
 
     def _check_baseline_feature(self, feature_name: str) -> bool:
         """Check if feature exists in baseline ruleset."""

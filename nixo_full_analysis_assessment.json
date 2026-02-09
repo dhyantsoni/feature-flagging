@@ -1,0 +1,791 @@
+{
+  "summary": {
+    "files_analyzed": 110,
+    "total_functions": 1081,
+    "feature_flagged": 4
+  },
+  "complexity_assessment": [
+    {
+      "function": "slack_handler._process_single_slack_event",
+      "complexity": 69,
+      "severity": "CRITICAL",
+      "recommendation": "Refactor into smaller functions. Consider extracting 6 helper functions.",
+      "estimated_helpers": 6
+    },
+    {
+      "function": "hubspot_service.sync_hubspot_companies",
+      "complexity": 60,
+      "severity": "CRITICAL",
+      "recommendation": "Refactor into smaller functions. Consider extracting 6 helper functions.",
+      "estimated_helpers": 6
+    },
+    {
+      "function": "linear_handler.process_linear_event",
+      "complexity": 59,
+      "severity": "CRITICAL",
+      "recommendation": "Refactor into smaller functions. Consider extracting 5 helper functions.",
+      "estimated_helpers": 5
+    },
+    {
+      "function": "customers_routes.get_customers_health",
+      "complexity": 43,
+      "severity": "CRITICAL",
+      "recommendation": "Refactor into smaller functions. Consider extracting 4 helper functions.",
+      "estimated_helpers": 4
+    },
+    {
+      "function": "misc_routes.ticket_reply",
+      "complexity": 35,
+      "severity": "HIGH",
+      "recommendation": "Refactor into smaller functions. Consider extracting 3 helper functions.",
+      "estimated_helpers": 3
+    },
+    {
+      "function": "intaker_routes.send_manual_response",
+      "complexity": 33,
+      "severity": "HIGH",
+      "recommendation": "Refactor into smaller functions. Consider extracting 3 helper functions.",
+      "estimated_helpers": 3
+    },
+    {
+      "function": "slack_channels.join_channels",
+      "complexity": 31,
+      "severity": "HIGH",
+      "recommendation": "Refactor into smaller functions. Consider extracting 3 helper functions.",
+      "estimated_helpers": 3
+    },
+    {
+      "function": "intaker_routes.get_intaker_config",
+      "complexity": 29,
+      "severity": "HIGH",
+      "recommendation": "Refactor into smaller functions. Consider extracting 2 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "field_formatting_worker.FieldFormattingWorker._send_to_platform",
+      "complexity": 28,
+      "severity": "HIGH",
+      "recommendation": "Refactor into smaller functions. Consider extracting 2 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "onboarding_routes.get_onboarding_status",
+      "complexity": 26,
+      "severity": "HIGH",
+      "recommendation": "Refactor into smaller functions. Consider extracting 2 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "slack_channels.list_channels",
+      "complexity": 26,
+      "severity": "HIGH",
+      "recommendation": "Refactor into smaller functions. Consider extracting 2 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "slack_oauth.oauth_callback",
+      "complexity": 25,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 2 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "github_routes.get_org_repositories",
+      "complexity": 25,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 2 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "slack_channels.send_release_note_to_slack",
+      "complexity": 24,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 2 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "customers_routes.get_customers",
+      "complexity": 23,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 2 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "authorization_service.AuthorizationService.bulk_assign_customers",
+      "complexity": 23,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 2 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "digest_service.DigestService.get_weekly_prs",
+      "complexity": 23,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 2 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "ai_service.AIService.find_matching_issue_from_candidates",
+      "complexity": 22,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 2 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "github_app_service.GitHubAppService.get_installation_token",
+      "complexity": 22,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 2 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "supabase_service.SupabaseService.update_issue_with_client_check",
+      "complexity": 21,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 2 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "slack_config.configure_slack",
+      "complexity": 19,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "fathom_adapter.FathomAdapter.get_transcript_data",
+      "complexity": 18,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "linear_routes.linear_oauth_verify",
+      "complexity": 18,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "meetings_service.MeetingsService.extract_with_customer_fields",
+      "complexity": 18,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "field_formatting_worker.FieldFormattingWorker._send_to_slack",
+      "complexity": 18,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "field_formatting_worker.FieldFormattingWorker._send_to_linear",
+      "complexity": 18,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "release_note_service.ReleaseNoteService._generate_section_bullets",
+      "complexity": 18,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "intaker_orchestrator.IntakerOrchestrator.handle_message",
+      "complexity": 18,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "extraction_worker.ExtractionWorker.process_job",
+      "complexity": 18,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "customers_routes.create_customer",
+      "complexity": 17,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "digests_routes.send_digest_to_slack",
+      "complexity": 17,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "authorization_service.AuthorizationService.demote_admin_to_fde",
+      "complexity": 17,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "digest_service.DigestService.save_digest",
+      "complexity": 17,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "linear_sync_service.LinearSyncService._create_linear_comments_for_customers",
+      "complexity": 17,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "release_note_service.ReleaseNoteService._create_release_note_prompt",
+      "complexity": 17,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "hubspot_routes.hubspot_oauth_callback",
+      "complexity": 16,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "github_routes.get_github_pull_requests",
+      "complexity": 16,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "field_formatting_worker.FieldFormattingWorker._send_to_hubspot",
+      "complexity": 16,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "meeting_webhooks.unified_webhook_handler",
+      "complexity": 15,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "pipeline_metrics.PipelineMetrics.get_health",
+      "complexity": 15,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "authorization_service.AuthorizationService.transfer_assignments",
+      "complexity": 15,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "webhook_verification.WebhookVerifier._verify_platform_secret",
+      "complexity": 15,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "field_formatting_worker.FieldFormattingWorker._process_field_extraction_job",
+      "complexity": 15,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "field_formatting_worker.FieldFormattingWorker._send_to_notion",
+      "complexity": 15,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "linear_service._make_linear_request",
+      "complexity": 15,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "transcript_worker.TranscriptWorker.process_job",
+      "complexity": 15,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "meetings_routes.assign_schema_to_customer",
+      "complexity": 14,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "linear_routes.linear_oauth_callback",
+      "complexity": 14,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "domain_cache.ContactMatcherService.match_attendees",
+      "complexity": 14,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "extraction_saga.ExtractionSaga.execute",
+      "complexity": 14,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "github_service.GitHubService.get_pull_requests",
+      "complexity": 14,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "slack_service._make_slack_request",
+      "complexity": 14,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "intaker_response_parser.ResponseParser._validate_collecting_response",
+      "complexity": 14,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "misc_routes.get_user_assignments",
+      "complexity": 13,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "customers_routes.bulk_assign",
+      "complexity": 13,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "hubspot_routes.get_hubspot_available_properties",
+      "complexity": 13,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "github_routes.index_repository",
+      "complexity": 13,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "intercom_customer_matcher.IntercomCustomerMatcher.match_conversation_to_customer",
+      "complexity": 13,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "audit_service.AuditService.log_bulk_assignment",
+      "complexity": 13,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "ai_service.AIService.classify_sender",
+      "complexity": 13,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "notion_service.NotionService._make_request",
+      "complexity": 13,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "notion_service.NotionService.validate_page_exists",
+      "complexity": 13,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "github_service.GitHubService.get_repo_pull_requests",
+      "complexity": 13,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "customer_fields_service.format_message_with_ai",
+      "complexity": 13,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "release_note_service.ReleaseNoteService._classify_pr_batch",
+      "complexity": 13,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "schemanotes.SchemaExtractionService.extract_schema_from_transcript",
+      "complexity": 13,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "meeting_webhooks.process_async_transcript_webhook",
+      "complexity": 12,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "meeting_webhooks.process_sync_transcript_webhook",
+      "complexity": 12,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "meeting_webhooks.process_meeting_webhook",
+      "complexity": 12,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "channels.EmailChannel.find_existing_issue_for_message",
+      "complexity": 12,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "linear_handler.linear_webhook",
+      "complexity": 12,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "slack_handler.get_slack_user_info",
+      "complexity": 12,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "onboarding_routes.skip_integration",
+      "complexity": 12,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "intercom_routes.test_intercom_connection",
+      "complexity": 12,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "intercom_routes.intercom_webhook",
+      "complexity": 12,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "misc_routes.update_user_role",
+      "complexity": 12,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "misc_routes.delete_user",
+      "complexity": 12,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "customers_routes.transfer_assignments",
+      "complexity": 12,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "digests_routes.get_weekly_prs",
+      "complexity": 12,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "digests_routes.get_digest_repository_prs",
+      "complexity": 12,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "digests_routes.generate_digest_v2",
+      "complexity": 12,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "github_routes.sync_github_pull_requests",
+      "complexity": 12,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "domain_cache.ContactMatcherService.learn_from_assignment",
+      "complexity": 12,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "webhook_verification.WebhookVerifier.verify_request",
+      "complexity": 12,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "webhook_verification.WebhookVerifier._verify_not_replay",
+      "complexity": 12,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "digest_service.DigestService.get_digest_with_prs",
+      "complexity": 12,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "slack_service.slack_post_message",
+      "complexity": 12,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "field_formatting_worker.FieldFormattingWorker.run",
+      "complexity": 12,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "ticket_assignment_service.TicketAssignmentService.check_and_update_first_response_tickets",
+      "complexity": 12,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "pull_request_sync.PullRequestSyncService._sync_single_pr",
+      "complexity": 12,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "release_note_service.ReleaseNoteService._classify_prs_to_sections",
+      "complexity": 12,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "release_note_service.ReleaseNoteService._assemble_release_note",
+      "complexity": 12,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "fireflies_adapter.FirefliesAdapter._fetch_transcript_attempt",
+      "complexity": 11,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "slack_handler.send_slack_reply",
+      "complexity": 11,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "slack_handler.check_messages_relatedness",
+      "complexity": 11,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "fields_routes.update_field",
+      "complexity": 11,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "intercom_routes.handle_conversation_webhook",
+      "complexity": 11,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "github_routes.search_related_prs",
+      "complexity": 11,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "email_utils.EmailUtils.clean_attendee_list",
+      "complexity": 11,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "hubspot_service._make_hubspot_request",
+      "complexity": 11,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "field_formatting_worker.FieldFormattingWorker._process_bulk_extraction_job",
+      "complexity": 11,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "supabase_service.SupabaseService.bulk_upsert_customers",
+      "complexity": 11,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "linear_service.LinearService.get_config",
+      "complexity": 11,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "intaker_orchestrator.IntakerOrchestrator.suggest_response",
+      "complexity": 11,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "intaker_routes.get_agent_name",
+      "complexity": 11,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    },
+    {
+      "function": "intaker_response_parser.ResponseParser._validate_sufficient_response",
+      "complexity": 11,
+      "severity": "MEDIUM",
+      "recommendation": "Refactor into smaller functions. Consider extracting 1 helper functions.",
+      "estimated_helpers": 2
+    }
+  ],
+  "feature_flag_assessment": {
+    "total_features": 1,
+    "total_flagged_functions": 4,
+    "features": {
+      "intaker_agent": {
+        "entry_points": [
+          "intaker_routes.get_session",
+          "intaker_routes.simulate",
+          "intaker_routes.get_templates",
+          "intaker_routes.get_intaker_config"
+        ],
+        "entry_point_count": 4,
+        "downstream_functions": 0,
+        "shared_dependencies": 0,
+        "risk_level": "LOW",
+        "recommendation": "Feature 'intaker_agent' has 4 entry points. Disabling would affect ~0 functions. 0 shared helpers must remain active."
+      }
+    }
+  },
+  "helper_assessment": {
+    "total_helpers": 0,
+    "shared_helpers_count": 0,
+    "shared_helpers": [],
+    "risk_assessment": "LOW",
+    "recommendation": "0 shared helpers are used by multiple features. Changes to these require careful testing across all dependent features."
+  },
+  "potential_dead_code": [],
+  "actionable_items": [
+    {
+      "priority": "HIGH",
+      "category": "Refactoring",
+      "action": "Refactor 4 critical complexity functions",
+      "details": [
+        "slack_handler._process_single_slack_event",
+        "hubspot_service.sync_hubspot_companies",
+        "linear_handler.process_linear_event",
+        "customers_routes.get_customers_health"
+      ]
+    }
+  ]
+}

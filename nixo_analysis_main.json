@@ -1,0 +1,19 @@
+{
+  "file_path": "/home/dhyan/nixo-custops/backend/main.py",
+  "call_graph": {},
+  "functions": [],
+  "feature_flags": {},
+  "helper_functions": {},
+  "shared_helpers": [],
+  "function_complexity": {},
+  "function_lines": {},
+  "feature_impact": {},
+  "statistics": {
+    "total_functions": 0,
+    "total_calls": 0,
+    "feature_flagged_functions": 0,
+    "helper_functions": 0,
+    "shared_helpers": 0,
+    "features": 0
+  }
+}

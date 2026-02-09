@@ -5,12 +5,15 @@
       "src": "index.py",
       "use": "@vercel/python",
       "config": {
-        "maxLambdaSize": "50mb",
-        "includeFiles": "api/**"
+        "maxLambdaSize": "50mb"
       }
     }
   ],
   "routes": [
+    {
+      "src": "/static/(.*)",
+      "dest": "/static/$1"
+    },
     {
       "src": "/(.*)",
       "dest": "index.py"

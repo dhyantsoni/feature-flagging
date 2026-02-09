@@ -5,19 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Feature Flag Management Dashboard</title>
     <link rel="stylesheet" href="/static/css/style.css">
-    <link rel="stylesheet" href="/static/css/ast-styles.css">
+    <link rel="stylesheet" href="/static/css/nixo.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🚩 Feature Flag Management Dashboard</h1>
+            <h1>Feature Flag Management Dashboard</h1>
             <div class="header-actions">
-                <div class="project-selector">
-                    <select id="projectSelect">
-                        <option value="">Select Project...</option>
-                    </select>
-                    <button class="btn btn-sm" id="createProjectBtn">+ New Project</button>
-                </div>
+                <nav class="main-nav">
+                    <button class="nav-btn active" data-tab="clients">Clients</button>
+                    <button class="nav-btn" data-tab="nixo-features">Features</button>
+                    <button class="nav-btn" data-tab="nixo-rulesets">Rulesets</button>
+                    <button class="nav-btn" data-tab="nixo-clients">Nixo Clients</button>
+                    <button class="nav-btn" data-tab="targeting">Targeting</button>
+                    <button class="nav-btn" data-tab="schedules">Schedules</button>
+                    <button class="nav-btn" data-tab="audit">Audit Log</button>
+                    <button class="nav-btn" data-tab="api-keys">API Keys</button>
+                </nav>
                 <div class="kill-switch-container">
                     <label class="switch">
                         <input type="checkbox" id="killSwitch">
@@ -28,87 +32,267 @@
             </div>
         </header>
 
-        <div class="main-content">
-            <!-- Sidebar with client list -->
-            <aside class="sidebar">
-                <h2>Clients</h2>
-                <div class="search-box">
-                    <input type="text" id="clientSearch" placeholder="Search clients...">
+        <!-- CLIENTS TAB -->
+        <div id="clientsTab" class="tab-content active">
+            <div class="main-content">
+                <!-- Sidebar with client list -->
+                <aside class="sidebar">
+                    <h2>Clients</h2>
+                    <div class="search-box">
+                        <input type="text" id="clientSearch" placeholder="Search clients...">
+                    </div>
+                    <div id="clientList" class="client-list">
+                        <div class="loading">Loading clients...</div>
+                    </div>
+                    <button class="btn btn-primary" id="addClientBtn">+ Add New Client</button>
+                </aside>
+
+                <!-- Main panel with client details -->
+                <main class="details-panel">
+                    <div id="welcomeMessage" class="welcome-message">
+                        <h2>Welcome to Feature Flag Management</h2>
+                        <p>Select a client from the list to view their features and manage their ruleset.</p>
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <h3 id="totalClients">0</h3>
+                                <p>Total Clients</p>
+                            </div>
+                            <div class="stat-card">
+                                <h3 id="totalRulesets">0</h3>
+                                <p>Rulesets</p>
+                            </div>
+                            <div class="stat-card">
+                                <h3 id="killSwitchStatus">Inactive</h3>
+                                <p>Kill Switch</p>
+                            </div>
+                            <div class="stat-card">
+                                <h3 id="systemVersion">-</h3>
+                                <p>API Version</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="clientDetails" class="client-details" style="display: none;">
+                        <div class="client-header">
+                            <div>
+                                <h2 id="clientName">Client Name</h2>
+                                <p id="clientId" class="client-id">client_id</p>
+                            </div>
+                            <div class="client-tier">
+                                <span id="clientTier" class="tier-badge">Tier</span>
+                            </div>
+                        </div>
+
+                        <div class="client-info">
+                            <div class="info-row">
+                                <span class="info-label">Current Ruleset:</span>
+                                <span id="currentRuleset" class="info-value">-</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Ruleset Description:</span>
+                                <span id="rulesetDescription" class="info-value">-</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Contact:</span>
+                                <span id="clientContact" class="info-value">-</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Signup Date:</span>
+                                <span id="clientSignupDate" class="info-value">-</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Total Features:</span>
+                                <span id="featureCount" class="info-value">0</span>
+                            </div>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button class="btn btn-secondary" id="changeRulesetBtn">Change Ruleset</button>
+                            <button class="btn btn-secondary" id="testFeatureBtn">Test Feature</button>
+                        </div>
+
+                        <div class="features-section">
+                            <h3>Available Features</h3>
+                            <div id="featuresList" class="features-list">
+                                <!-- Features will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+
+        <!-- TARGETING TAB -->
+        <div id="targetingTab" class="tab-content">
+            <div class="tab-header">
+                <h2>Targeting Rules</h2>
+                <p>Create rules to enable/disable features based on user attributes</p>
+                <button class="btn btn-primary" id="addTargetingRuleBtn">+ Add Targeting Rule</button>
+            </div>
+            <div class="rules-filter">
+                <input type="text" id="targetingSearch" placeholder="Search rules..." class="search-input">
+                <select id="targetingFeatureFilter" class="form-select">
+                    <option value="">All Features</option>
+                </select>
+            </div>
+            <div id="targetingRulesList" class="rules-list">
+                <div class="loading">Loading targeting rules...</div>
+            </div>
+        </div>
+
+        <!-- SCHEDULES TAB -->
+        <div id="schedulesTab" class="tab-content">
+            <div class="tab-header">
+                <h2>Feature Schedules</h2>
+                <p>Schedule features to enable/disable at specific times</p>
+                <button class="btn btn-primary" id="addScheduleBtn">+ Add Schedule</button>
+            </div>
+            <div class="schedule-filter">
+                <select id="scheduleFeatureFilter" class="form-select">
+                    <option value="">All Features</option>
+                </select>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="showActiveOnly" checked>
+                    Active only
+                </label>
+            </div>
+            <div id="schedulesList" class="schedules-list">
+                <div class="loading">Loading schedules...</div>
+            </div>
+            <div class="upcoming-schedules">
+                <h3>Upcoming (Next 24h)</h3>
+                <div id="upcomingSchedules"></div>
+            </div>
+        </div>
+
+        <!-- AUDIT LOG TAB -->
+        <div id="auditTab" class="tab-content">
+            <div class="tab-header">
+                <h2>Audit Log</h2>
+                <p>View all changes to flags, clients, and rulesets</p>
+            </div>
+            <div class="audit-filters">
+                <select id="auditEntityFilter" class="form-select">
+                    <option value="">All Entities</option>
+                    <option value="feature">Features</option>
+                    <option value="client">Clients</option>
+                    <option value="ruleset">Rulesets</option>
+                    <option value="api_key">API Keys</option>
+                    <option value="schedule">Schedules</option>
+                    <option value="targeting_rule">Targeting Rules</option>
+                    <option value="system">System</option>
+                </select>
+                <input type="text" id="auditSearch" placeholder="Search entity..." class="search-input">
+                <button class="btn btn-sm" id="refreshAuditBtn">Refresh</button>
+            </div>
+            <div id="auditLogList" class="audit-list">
+                <div class="loading">Loading audit logs...</div>
+            </div>
+        </div>
+
+        <!-- NIXO FEATURES TAB -->
+        <div id="nixo-featuresTab" class="tab-content">
+            <div class="nixo-features-header">
+                <div>
+                    <h2>Features</h2>
+                    <p class="tab-subtitle">Auto-discovered features from nixo-custops codebase</p>
                 </div>
-                <div id="clientList" class="client-list">
-                    <div class="loading">Loading clients...</div>
+                <div class="nixo-features-actions">
+                    <button class="btn btn-primary" id="syncFeaturesBtn">Sync from Codebase</button>
+                    <button class="btn btn-sm" id="expandAllCategories">Expand All</button>
+                    <button class="btn btn-sm" id="collapseAllCategories">Collapse All</button>
                 </div>
-                <button class="btn btn-primary" id="addClientBtn">+ Add New Client</button>
-            </aside>
-
-            <!-- Main panel with client details -->
-            <main class="details-panel">
-                <div id="welcomeMessage" class="welcome-message">
-                    <h2>Welcome to Feature Flag Management</h2>
-                    <p>Select a client from the list to view their features and manage their ruleset.</p>
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <h3 id="totalClients">0</h3>
-                            <p>Total Clients</p>
-                        </div>
-                        <div class="stat-card">
-                            <h3 id="totalRulesets">0</h3>
-                            <p>Rulesets</p>
-                        </div>
-                        <div class="stat-card">
-                            <h3 id="killSwitchStatus">Inactive</h3>
-                            <p>Kill Switch</p>
-                        </div>
-                    </div>
+            </div>
+            <div class="nixo-stats">
+                <div class="nixo-stat">
+                    <span class="nixo-stat-label">Last Sync</span>
+                    <span class="nixo-stat-value" id="nixoLastSync">-</span>
                 </div>
-
-                <div id="clientDetails" class="client-details" style="display: none;">
-                    <div class="client-header">
-                        <div>
-                            <h2 id="clientName">Client Name</h2>
-                            <p id="clientId" class="client-id">client_id</p>
-                        </div>
-                        <div class="client-tier">
-                            <span id="clientTier" class="tier-badge">Tier</span>
-                        </div>
-                    </div>
-
-                    <div class="client-info">
-                        <div class="info-row">
-                            <span class="info-label">Current Ruleset:</span>
-                            <span id="currentRuleset" class="info-value">-</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Ruleset Description:</span>
-                            <span id="rulesetDescription" class="info-value">-</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Contact:</span>
-                            <span id="clientContact" class="info-value">-</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Signup Date:</span>
-                            <span id="clientSignupDate" class="info-value">-</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Total Features:</span>
-                            <span id="featureCount" class="info-value">0</span>
-                        </div>
-                    </div>
-
-                    <div class="action-buttons">
-                        <button class="btn btn-secondary" id="changeRulesetBtn">Change Ruleset</button>
-                        <button class="btn btn-secondary" id="testFeatureBtn">Test Feature</button>
-                    </div>
-
-                    <div class="features-section">
-                        <h3>Available Features</h3>
-                        <div id="featuresList" class="features-list">
-                            <!-- Features will be populated here -->
-                        </div>
-                    </div>
+                <div class="nixo-stat">
+                    <span class="nixo-stat-label">Total Features</span>
+                    <span class="nixo-stat-value" id="nixoTotalFeatures">0</span>
                 </div>
-            </main>
+                <div class="nixo-stat">
+                    <span class="nixo-stat-label">Enforced</span>
+                    <span class="nixo-stat-value" id="nixoEnforcedCount">0</span>
+                </div>
+            </div>
+            <div id="nixoFeaturesContainer">
+                <div class="loading">Loading features...</div>
+            </div>
+        </div>
+
+        <!-- NIXO RULESETS TAB -->
+        <div id="nixo-rulesetsTab" class="tab-content">
+            <div class="nixo-rulesets-header">
+                <div>
+                    <h2>Rulesets</h2>
+                    <p class="tab-subtitle">Manage feature rulesets with inheritance</p>
+                </div>
+                <button class="btn btn-primary" id="createRulesetBtn">+ Create Ruleset</button>
+            </div>
+            <div class="nixo-rulesets-filters">
+                <input type="text" id="rulesetSearch" class="search-input" placeholder="Search rulesets...">
+                <label>
+                    <input type="checkbox" id="templatesOnlyCheckbox">
+                    Templates only
+                </label>
+            </div>
+            <div id="nixoRulesetsGrid">
+                <div class="loading">Loading rulesets...</div>
+            </div>
+        </div>
+
+        <!-- NIXO CLIENTS TAB -->
+        <div id="nixo-clientsTab" class="tab-content">
+            <div class="nixo-clients-header">
+                <div>
+                    <h2>Clients</h2>
+                    <p class="tab-subtitle">Manage client ruleset assignments and overrides</p>
+                </div>
+                <button class="btn btn-primary" id="bulkAssignBtn">Bulk Assign...</button>
+            </div>
+            <div class="nixo-clients-filters">
+                <input type="text" id="nixoClientSearch" class="search-input" placeholder="Search clients...">
+                <select id="clientRulesetFilter" class="form-select ruleset-dropdown">
+                    <option value="">All Rulesets</option>
+                </select>
+            </div>
+            <div class="table-container">
+                <table class="nixo-clients-table">
+                    <thead>
+                        <tr>
+                            <th>Client</th>
+                            <th>Ruleset</th>
+                            <th>Overrides</th>
+                            <th>Features</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="nixoClientsTable">
+                        <tr><td colspan="5" class="loading">Loading clients...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- Client Detail Panel (Slideout) -->
+            <div id="nixoClientPanel"></div>
+        </div>
+
+        <!-- API KEYS TAB -->
+        <div id="apiKeysTab" class="tab-content">
+            <div class="tab-header">
+                <h2>API Keys</h2>
+                <p>Manage API keys for programmatic access</p>
+                <button class="btn btn-primary" id="createApiKeyBtn">+ Create API Key</button>
+            </div>
+            <div id="apiKeysList" class="api-keys-list">
+                <div class="loading">Loading API keys...</div>
+            </div>
+            <div class="api-docs">
+                <h3>API Usage</h3>
+                <pre><code>curl -H "Authorization: Bearer YOUR_API_KEY" \
+     https://your-domain.com/api/clients</code></pre>
+            </div>
         </div>
     </div>
 
@@ -174,6 +358,15 @@
                     <label for="testUserId">User ID (optional):</label>
                     <input type="text" id="testUserId" class="form-input" placeholder="For percentage rollouts">
                 </div>
+                <div class="form-group">
+                    <label for="testCountry">Country (optional):</label>
+                    <input type="text" id="testCountry" class="form-input" placeholder="e.g., US">
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="testDetailed"> Show detailed evaluation
+                    </label>
+                </div>
                 <div class="modal-buttons">
                     <button type="submit" class="btn btn-primary">Test Feature</button>
                     <button type="button" class="btn btn-secondary" id="cancelTestFeature">Cancel</button>
@@ -185,7 +378,303 @@
         </div>
     </div>
 
+    <!-- Modal for adding targeting rule -->
+    <div id="addTargetingRuleModal" class="modal">
+        <div class="modal-content modal-large">
+            <span class="close">&times;</span>
+            <h2>Add Targeting Rule</h2>
+            <form id="addTargetingRuleForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="targetingRuleName">Rule Name:</label>
+                        <input type="text" id="targetingRuleName" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="targetingFeatureName">Feature:</label>
+                        <input type="text" id="targetingFeatureName" class="form-input" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="targetingAction">Action:</label>
+                        <select id="targetingAction" class="form-select">
+                            <option value="enable">Enable</option>
+                            <option value="disable">Disable</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="targetingPriority">Priority:</label>
+                        <input type="number" id="targetingPriority" class="form-input" value="0">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Conditions:</label>
+                    <div id="conditionsContainer">
+                        <div class="condition-row">
+                            <select class="condition-attr form-select">
+                                <option value="country">Country</option>
+                                <option value="device">Device</option>
+                                <option value="user_id">User ID</option>
+                                <option value="email">Email</option>
+                                <option value="plan">Plan</option>
+                                <option value="version">App Version</option>
+                            </select>
+                            <select class="condition-op form-select">
+                                <option value="equals">equals</option>
+                                <option value="not_equals">not equals</option>
+                                <option value="contains">contains</option>
+                                <option value="in">in list</option>
+                                <option value="not_in">not in list</option>
+                                <option value="gt">greater than</option>
+                                <option value="lt">less than</option>
+                                <option value="percentage">percentage</option>
+                            </select>
+                            <input type="text" class="condition-value form-input" placeholder="Value">
+                            <button type="button" class="btn btn-sm btn-danger remove-condition">X</button>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-sm" id="addConditionBtn">+ Add Condition</button>
+                </div>
+                <div class="modal-buttons">
+                    <button type="submit" class="btn btn-primary">Create Rule</button>
+                    <button type="button" class="btn btn-secondary" id="cancelAddTargetingRule">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for adding schedule -->
+    <div id="addScheduleModal" class="modal">
+        <div class="modal-content modal-large">
+            <span class="close">&times;</span>
+            <h2>Add Feature Schedule</h2>
+            <form id="addScheduleForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="scheduleFeatureName">Feature:</label>
+                        <input type="text" id="scheduleFeatureName" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="scheduleType">Schedule Type:</label>
+                        <select id="scheduleType" class="form-select">
+                            <option value="date_range">Date Range</option>
+                            <option value="one_time">One Time</option>
+                            <option value="recurring">Recurring (Cron)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row" id="dateRangeFields">
+                    <div class="form-group">
+                        <label for="scheduleStartAt">Start:</label>
+                        <input type="datetime-local" id="scheduleStartAt" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="scheduleEndAt">End:</label>
+                        <input type="datetime-local" id="scheduleEndAt" class="form-input">
+                    </div>
+                </div>
+                <div class="form-group" id="cronField" style="display:none;">
+                    <label for="scheduleCron">Cron Expression:</label>
+                    <input type="text" id="scheduleCron" class="form-input" placeholder="0 9 * * 1-5">
+                    <small>Format: minute hour day month weekday (e.g., "0 9 * * 1-5" = 9am weekdays)</small>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="scheduleEnabled">During Schedule:</label>
+                        <select id="scheduleEnabled" class="form-select">
+                            <option value="true">Enable Feature</option>
+                            <option value="false">Disable Feature</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="schedulePriority">Priority:</label>
+                        <input type="number" id="schedulePriority" class="form-input" value="0">
+                    </div>
+                </div>
+                <div class="modal-buttons">
+                    <button type="submit" class="btn btn-primary">Create Schedule</button>
+                    <button type="button" class="btn btn-secondary" id="cancelAddSchedule">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for creating API key -->
+    <div id="createApiKeyModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Create API Key</h2>
+            <form id="createApiKeyForm">
+                <div class="form-group">
+                    <label for="apiKeyName">Key Name:</label>
+                    <input type="text" id="apiKeyName" class="form-input" required placeholder="My API Key">
+                </div>
+                <div class="form-group">
+                    <label for="apiKeyDescription">Description:</label>
+                    <input type="text" id="apiKeyDescription" class="form-input" placeholder="Optional description">
+                </div>
+                <div class="form-group">
+                    <label for="apiKeyPermissions">Permissions:</label>
+                    <select id="apiKeyPermissions" class="form-select" multiple>
+                        <option value="read" selected>Read</option>
+                        <option value="write">Write</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="apiKeyRateLimit">Rate Limit (req/hour):</label>
+                    <input type="number" id="apiKeyRateLimit" class="form-input" value="1000">
+                </div>
+                <div class="form-group">
+                    <label for="apiKeyExpires">Expires In (days):</label>
+                    <input type="number" id="apiKeyExpires" class="form-input" placeholder="Leave empty for no expiry">
+                </div>
+                <div class="modal-buttons">
+                    <button type="submit" class="btn btn-primary">Create Key</button>
+                    <button type="button" class="btn btn-secondary" id="cancelCreateApiKey">Cancel</button>
+                </div>
+            </form>
+            <div id="newApiKeyResult" class="api-key-result" style="display: none;">
+                <div class="warning-banner">Save this key now - it won't be shown again!</div>
+                <code id="newApiKeyValue"></code>
+                <button class="btn btn-sm" id="copyApiKey">Copy</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CREATE RULESET MODAL -->
+    <div id="createRulesetModal" class="modal">
+        <div class="modal-content modal-large">
+            <span class="close" data-dismiss="modal">&times;</span>
+            <h2>Create New Ruleset</h2>
+            <form id="createRulesetForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="createRulesetName">Name (identifier):</label>
+                        <input type="text" id="createRulesetName" class="form-input" required placeholder="e.g., custom_plan">
+                    </div>
+                    <div class="form-group">
+                        <label for="createRulesetDisplayName">Display Name:</label>
+                        <input type="text" id="createRulesetDisplayName" class="form-input" required placeholder="e.g., Custom Plan">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="createRulesetDescription">Description:</label>
+                    <textarea id="createRulesetDescription" class="form-input" rows="2" placeholder="Optional description..."></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="createRulesetColor">Color:</label>
+                        <input type="color" id="createRulesetColor" value="#6366f1">
+                    </div>
+                    <div class="form-group">
+                        <label for="createRulesetInherits">Inherits From:</label>
+                        <select id="createRulesetInherits" class="form-select">
+                            <option value="">No inheritance</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Features:</label>
+                    <div id="createRulesetFeatures" class="feature-checklist">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+                <div class="modal-buttons">
+                    <button type="submit" class="btn btn-primary">Create Ruleset</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- EDIT RULESET MODAL -->
+    <div id="editRulesetModal" class="modal">
+        <div class="modal-content modal-large">
+            <span class="close" data-dismiss="modal">&times;</span>
+            <h2>Edit Ruleset</h2>
+            <form id="editRulesetForm">
+                <input type="hidden" id="editRulesetId">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editRulesetName">Name (identifier):</label>
+                        <input type="text" id="editRulesetName" class="form-input" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="editRulesetDisplayName">Display Name:</label>
+                        <input type="text" id="editRulesetDisplayName" class="form-input" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="editRulesetDescription">Description:</label>
+                    <textarea id="editRulesetDescription" class="form-input" rows="2"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editRulesetColor">Color:</label>
+                        <input type="color" id="editRulesetColor" value="#6366f1">
+                    </div>
+                    <div class="form-group">
+                        <label for="editRulesetInherits">Inherits From:</label>
+                        <select id="editRulesetInherits" class="form-select">
+                            <option value="">No inheritance</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Features:</label>
+                    <div id="editRulesetFeatures" class="feature-checklist">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+                <div class="modal-buttons">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ADD OVERRIDE MODAL -->
+    <div id="addOverrideModal" class="modal">
+        <div class="modal-content">
+            <span class="close" data-dismiss="modal">&times;</span>
+            <h2>Add Feature Override</h2>
+            <form id="addOverrideForm">
+                <input type="hidden" id="overrideClientId">
+                <div class="form-group">
+                    <label for="overrideFeatureSelect">Feature:</label>
+                    <select id="overrideFeatureSelect" class="form-select" required>
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="overrideEnabled">Status:</label>
+                    <select id="overrideEnabled" class="form-select" required>
+                        <option value="true">Enable</option>
+                        <option value="false">Disable</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="overrideReason">Reason:</label>
+                    <input type="text" id="overrideReason" class="form-input" placeholder="e.g., Trial access, Partner deal">
+                </div>
+                <div class="form-group">
+                    <label for="overrideExpires">Expires At (optional):</label>
+                    <input type="datetime-local" id="overrideExpires" class="form-input">
+                </div>
+                <div class="modal-buttons">
+                    <button type="submit" class="btn btn-primary">Add Override</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification container -->
+    <div id="notifications" class="notifications"></div>
+
     <script src="/static/js/dashboard.js"></script>
-    <script src="/static/js/ast-analyzer.js"></script>
+    <script src="/static/js/nixo.js"></script>
 </body>
 </html>
