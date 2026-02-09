@@ -326,4 +326,7 @@ def get_feature_sync(supabase_client=None) -> NixoFeatureSync:
     global _sync_instance
     if _sync_instance is None:
         _sync_instance = NixoFeatureSync(supabase_client)
+    elif supabase_client is not None:
+        # Update supabase client if provided (in case it was initialized later)
+        _sync_instance.supabase = supabase_client
     return _sync_instance

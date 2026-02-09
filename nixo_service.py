@@ -828,4 +828,7 @@ def get_nixo_service(supabase_client=None) -> NixoRulesetService:
     global _service_instance
     if _service_instance is None:
         _service_instance = NixoRulesetService(supabase_client)
+    elif supabase_client is not None:
+        # Update supabase client if provided (in case it was initialized later)
+        _service_instance.supabase = supabase_client
     return _service_instance

@@ -13,7 +13,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- ============================================================================
 -- CLEAN SLATE - Drop existing objects
 -- ============================================================================
-DROP TABLE IF EXISTS feature_audit_log CASCADE;
+DROP TABLE IF EXISTS feature_audit_log CASCADE;i 
 DROP TABLE IF EXISTS client_overrides CASCADE;
 DROP TABLE IF EXISTS client_rulesets CASCADE;
 DROP TABLE IF EXISTS ruleset_features CASCADE;
