@@ -16,45 +16,40 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-# The 26 known nixo features with their categories
+# The 23 features from nixo-custops AVAILABLE_FEATURES (exact match)
 NIXO_FEATURES = {
-    # Account Management
+    # Account Management (4 features)
     "accounts": {"category": "Account Management", "description": "Accounts management page"},
     "customer_dashboard": {"category": "Account Management", "description": "Customer dashboard view"},
-    "schemas": {"category": "Account Management", "description": "Schemas configuration"},
-    "account_analysis": {"category": "Account Management", "description": "Account analysis tools"},
+    "schemas": {"category": "Account Management", "description": "Schemas configuration page"},
+    "account_analysis": {"category": "Account Management", "description": "Account analysis and insights"},
 
-    # AI Studio
-    "intaker_agent": {"category": "AI Studio", "description": "AI Intaker Agent for automated responses"},
+    # AI Studio (3 features)
+    "intaker_agent": {"category": "AI Studio", "description": "AI Intaker Agent for automated support intake"},
     "tickets": {"category": "AI Studio", "description": "Tickets/Issues management"},
-    "testbed": {"category": "AI Studio", "description": "AI Testbed for testing prompts"},
+    "testbed": {"category": "AI Studio", "description": "AI Testbed for testing"},
 
-    # Communications
-    "related_tickets": {"category": "Communications", "description": "Related tickets linking"},
-    "blasts": {"category": "Communications", "description": "Blast messaging to customers"},
-    "digests": {"category": "Communications", "description": "Weekly digest generation"},
+    # Communications (3 features)
+    "related_tickets": {"category": "Communications", "description": "Related tickets view"},
+    "blasts": {"category": "Communications", "description": "Broadcast/Blasts messaging"},
+    "digests": {"category": "Communications", "description": "Digests and summaries"},
 
-    # Integrations
+    # Integrations (10 features)
     "slack_settings": {"category": "Integrations", "description": "Slack integration settings"},
-    "hubspot_integration": {"category": "Integrations", "description": "HubSpot CRM integration"},
+    "hubspot_integration": {"category": "Integrations", "description": "HubSpot CRM integration and notifications"},
     "linear_integration": {"category": "Integrations", "description": "Linear issue tracking integration"},
-    "fireflies": {"category": "Integrations", "description": "Fireflies.ai meeting integration"},
-    "fathom": {"category": "Integrations", "description": "Fathom meeting notes integration"},
+    "fireflies": {"category": "Integrations", "description": "Fireflies meeting integration"},
+    "fathom": {"category": "Integrations", "description": "Fathom meeting integration"},
     "circleback": {"category": "Integrations", "description": "Circleback meeting integration"},
-    "github_repos": {"category": "Integrations", "description": "GitHub repository access"},
-    "github_oauth": {"category": "Integrations", "description": "GitHub OAuth authentication"},
-    "github_app": {"category": "Integrations", "description": "GitHub App installation"},
-    "intercom": {"category": "Integrations", "description": "Intercom chat integration"},
+    "github_repos": {"category": "Integrations", "description": "GitHub indexed repositories"},
+    "intercom": {"category": "Integrations", "description": "Intercom integration"},
+    "github_oauth": {"category": "Integrations", "description": "GitHub OAuth integration"},
+    "github_app": {"category": "Integrations", "description": "GitHub App integration"},
 
-    # Analytics & Advanced
-    "custom_branding": {"category": "Advanced", "description": "Custom branding options"},
-    "advanced_analytics": {"category": "Advanced", "description": "Advanced analytics dashboard"},
-    "api_access": {"category": "Advanced", "description": "API access for automation"},
-
-    # Other
-    "onboarding": {"category": "Other", "description": "User onboarding flow"},
-    "release_notes": {"category": "Other", "description": "Release notes management"},
-    "meetings": {"category": "Other", "description": "Meeting management features"},
+    # Advanced (3 features)
+    "custom_branding": {"category": "Advanced", "description": "Custom branding and white-labeling"},
+    "advanced_analytics": {"category": "Advanced", "description": "Advanced analytics and reporting"},
+    "api_access": {"category": "Advanced", "description": "API access for integrations"},
 }
 
 # Default tier assignments
